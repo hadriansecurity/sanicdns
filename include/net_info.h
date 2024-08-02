@@ -1,5 +1,6 @@
 #pragma once
 
+#include <linux/ethtool.h>
 #include <net/if.h>
 #include <fixed_name.hpp>
 #include <network_types.h>
@@ -18,6 +19,6 @@ struct RouteInfo {
 
 tl::expected<RouteInfo, std::string> get_route_info(std::optional<FixedName<IFNAMSIZ>> if_name = std::nullopt);
 tl::expected<EtherAddr, std::string> get_mac_address(FixedName<IFNAMSIZ> iface, const InAddr& in_addr);
-tl::expected<uint32_t, std::string> get_combined_channel_count(FixedName<IFNAMSIZ> iface);
+tl::expected<ethtool_channels, std::string> get_channel_count(FixedName<IFNAMSIZ> iface);
 
 }
