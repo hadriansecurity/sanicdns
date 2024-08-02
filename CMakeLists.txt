@@ -78,9 +78,12 @@ set(
 # Source Files
 set(SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
 
-include(${CMAKE_SOURCE_DIR}/cmake/GenerateVersion.cmake)
-
-configure_file(${CMAKE_SOURCE_DIR}/include/version.h.in DST=${CMAKE_SOURCE_DIR}/include/version.h @ONLY)
+# Generate version file
+add_custom_target(version
+	${CMAKE_COMMAND} -D SRC=${CMAKE_SOURCE_DIR}/include/version.h.in
+			-D DST=${CMAKE_SOURCE_DIR}/include/version.h
+			-P ${CMAKE_SOURCE_DIR}/cmake/GenerateVersion.cmake
+)
 
 # Subdirectories
 cmake_policy(SET CMP0077 NEW)
@@ -135,6 +138,8 @@ target_link_libraries("${PROJ_NAME}_libs" PUBLIC
 target_link_libraries(${PROJ_NAME} PUBLIC
     "${PROJ_NAME}_libs"
 )
+
+add_dependencies(${PROJ_NAME} version)
 
 ###############################################################################
 ## XDP program ################################################################
