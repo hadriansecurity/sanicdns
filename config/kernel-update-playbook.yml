@@ -1,0 +1,48 @@
+---
+-
+  hosts: all
+  become: "yes"
+  become_method: sudo
+  remote_user: root
+  tasks:
+    -
+      apt_repository:
+        repo: "deb https://deb.debian.org/debian bullseye-backports main"
+        state: present
+      name: "add kernel repo"
+    -
+      apt:
+        update_cache: "yes"
+      name: "update apt cache"
+    -
+      apt:
+        name: linux-image-5.18.0-0.deb11.4-amd64
+        state: present
+      name: "install kernel"
+    -
+      name: reboot
+      reboot:
+        post_reboot_delay: 60
+        reboot_timeout: 600
+    -
+      name: "wait for host to come back"
+      wait_for_connection:
+        delay: 60
+        timeout: 600
+    -
+      apt_repository:
+        repo: "deb https://deb.debian.org/debian bullseye-backports main"
+        state: absent
+      name: "remove kernel repo"
+    -
+      apt:
+        update_cache: "yes"
+      name: "update apt cache"
+    -
+      apt:
+        upgrade: "yes"
+      name: upgrade
+    -
+      apt:
+        autoremove: "yes"
+      name: autoremove

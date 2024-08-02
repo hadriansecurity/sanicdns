@@ -1,0 +1,5 @@
+add_subdirectory(input_processor)
+add_subdirectory(dns_packet_constructor)
+add_subdirectory(dns_packet_parser)
+add_subdirectory(clocks)
+add_subdirectory(pointers)

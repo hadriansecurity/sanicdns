@@ -1,0 +1,105 @@
+---
+- hosts: all
+  # connection: local
+  become: true
+  tasks:
+  - name: Install packages that allow apt to be used over HTTPS plus better usability of the environment
+    apt:
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+      - git
+      - cmake
+      - build-essential
+      - ninja-build
+      - libnuma-dev
+      - python3-pip
+      - meson
+      - numactl
+      - gnupg
+      - wget
+
+  -
+    apt_repository:
+      repo: "deb https://deb.debian.org/debian testing main"
+      state: present
+    name: "add testing repo"
+  -
+    apt:
+      update_cache: "yes"
+    name: "update apt cache"
+  -
+    apt:
+      name: clang-15
+      state: present
+    name: "install clang"
+  -
+    apt:
+      name: gcc-12
+      state: present
+    name: "install gcc"
+  -
+    apt:
+      name: g++-12
+      state: present
+  -
+    apt:
+      name: gcc-10
+      state: absent
+  -
+    apt:
+      name: g++-10
+      state: absent
+  -
+    apt_repository:
+      repo: "deb http://deb.debian.org/debian testing main"
+      state: absent
+    name: "remove testing repo"
+  -
+    apt:
+      update_cache: "yes"
+    name: "update apt cache"
+  -
+    apt:
+      upgrade: "yes"
+    name: upgrade
+  -
+    apt:
+      autoremove: "yes"
+    name: autoremove
+
+  - name: Create the Repositories directory
+    ansible.builtin.file:
+      path: ~/Repositories
+      state: directory
+
+  - name: Clone liburing
+    ansible.builtin.git:
+      repo: 'https://github.com/axboe/liburing.git'
+      dest: ~/Repositories/liburing
+      version: liburing-2.2
+
+  - name: Build liburing
+    community.general.make:
+      chdir: ~/Repositories/liburing
+      target: all
+
+  - name: Install liburing
+    community.general.make:
+      chdir: ~/Repositories/liburing
+      target: install
+
+  - name: Clone DPDK
+    ansible.builtin.git:
+      repo: 'https://github.com/DPDK/dpdk.git'
+      dest: ~/Repositories/dpdk
+      version: v22.07
+
+  - name: Install pyelftools python package
+    ansible.builtin.pip:
+      name: pyelftools
+
+  - name: Compile and install DPDK
+    ansible.builtin.raw: cd ~/Repositories/dpdk; meson build; cd build; ninja -j$(nproc); sudo ninja install; sudo ldconfig

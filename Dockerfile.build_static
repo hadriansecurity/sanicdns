@@ -1,0 +1,74 @@
+# Stage 1: Build the executable
+FROM alpine:3.20 AS build_env
+
+# Install prerequisites
+RUN apk update && \
+    apk add --no-cache build-base \
+                       git \
+                       cmake \
+                       ninja \
+                       python3 \
+                       elfutils-dev \
+                       meson \
+                       py3-elftools \
+                       ncurses-dev \
+                       liburing-dev \
+                       linux-headers \
+                       libbpf-dev \
+                       libxdp-dev \
+                       libxdp-static \
+                       zlib-static \
+                       zstd-static \
+                       bsd-compat-headers \
+                       numactl-dev \
+                       libarchive-static \
+                       xz-static \
+                       ncurses-static \
+                       musl-dev \
+                       clang && \
+    # Clean up
+    rm -rf /var/cache/apk/*
+
+# Set environment variables
+ENV CPATH=/usr/include/x86_64-linux-gnu/
+
+ENV CFLAGS="-D_LARGEFILE64_SOURCE"
+ENV CXXFLAGS="-D_LARGEFILE64_SOURCE"
+
+WORKDIR /workspace
+
+RUN git clone https://github.com/DPDK/dpdk.git
+
+WORKDIR /workspace/dpdk
+
+RUN git checkout v24.03
+
+# Build with -Dplatform=native by default, but allow overriding with ARG
+ARG DPDK_PLATFORM=native
+RUN meson build --default-library=static -Dplatform=${DPDK_PLATFORM}
+RUN ninja -C build
+RUN ninja -C build install
+
+FROM build_env AS builder
+
+# Create and set work directory
+WORKDIR /workspace/src
+
+# Copy the repository contents into the container
+COPY . /workspace/src
+
+# Generate build files
+RUN cmake -S /workspace/src/ -B /workspace/src/build -DCMAKE_GENERATOR=Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=ci/clang-toolchain.cmake -DNIC_TYPE=AF_XDP -DBUILD_STATIC=ON
+# Build the project
+RUN ninja -C /workspace/src/build
+
+RUN mkdir /workspace/sanicdns_af_xdp
+
+RUN cp /workspace/src/build/sanicdns /workspace/sanicdns_af_xdp/
+RUN cp /workspace/src/build/xdp/CMakeFiles/sanicdns_xdp.dir/src/sanicdns_xdp.c.o /workspace/sanicdns_af_xdp/
+
+# Stage 2: Copy the executable to the host system
+FROM scratch AS copier
+
+COPY --from=builder /workspace/src/build/sanicdns .
+COPY --from=builder /workspace/src/build/xdp/CMakeFiles/sanicdns_xdp.dir/src/sanicdns_xdp.c.o .
