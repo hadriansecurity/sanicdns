@@ -1,10 +1,9 @@
 find_package(Git)
 
 if(GIT_EXECUTABLE)
-	get_filename_component(WORKING_DIR ${SRC} DIRECTORY)
 	execute_process(
 		COMMAND ${GIT_EXECUTABLE} describe --tags --dirty
-		WORKING_DIRECTORY ${WORKING_DIR}
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 		OUTPUT_VARIABLE SANICDNS_VERSION
 		RESULT_VARIABLE ERROR_CODE
 		OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -17,4 +16,5 @@ if(SANICDNS_VERSION STREQUAL "")
 	message(WARNING "Failed to determine version from Git tags. Using default version \"${FOO_VERSION}\".")
 endif()
 
-configure_file(${SRC} ${DST} @ONLY)
+message("Building sanicdns version ${SANICDNS_VERSION}")
+
