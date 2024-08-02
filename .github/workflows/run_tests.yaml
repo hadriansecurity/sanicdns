@@ -1,0 +1,60 @@
+name: Build & Run Tests
+
+on: [pull_request]
+
+jobs:
+  build_and_test:
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        nic_type: [AF_XDP, I40E]
+    name: Build bruteforcer
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          path: src/
+          submodules: recursive
+      
+      - name: Cache apt packages
+        uses: actions/cache@v2
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
+
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential \
+                            git \
+                            cmake \
+                            ninja-build \
+                            python3 \
+                            libelf-dev \
+                            dpdk \
+                            dpdk-dev \
+                            libncurses5-dev \
+                            liburing-dev \
+                            software-properties-common \
+                            linux-headers-generic \
+                            libbpf-dev \
+                            libc6-dev \
+                            libc6-dev-i386 \
+                            libxdp-dev \
+                            clang-17
+
+      - name: Symlink asm folder
+        run: sudo ln -s /usr/include/asm-generic/ /usr/include/asm
+
+      - name: Make build dir
+        run: mkdir src/build
+
+      - name: Generate build files
+        run: cmake -S src/ -B src/build -DCMAKE_GENERATOR=Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=ci/${{matrix.compiler}}-toolchain.cmake -DNIC_TYPE=${{matrix.nic_type}} -DBUILD_TESTS=ON
+
+      - name: Build bruteforcer
+        run: ninja -C src/build
+
+      - name: Run tests
+        run: ctest run --test-dir src/build --output-on-failure
