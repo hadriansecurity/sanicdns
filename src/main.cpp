@@ -1,6 +1,7 @@
 #include <expected_helpers.h>
 #include <fcntl.h>
 #include <ncurses.h>
+#include <net/if.h>
 #include <rte_cycles.h>
 #include <rte_errno.h>
 #include <rte_ethdev.h>
@@ -453,6 +454,30 @@ std::optional<EthernetConfig> GetEthernetConfig(const UserConfig& user_config) {
 	return to_ret;
 }
 
+tl::expected<void, std::string> VerifyQueues(FixedName<IFNAMSIZ> dev_name, const uint16_t num_cores,
+    const uint16_t total_queues) {
+	auto channel_count = net_info::get_channel_count(dev_name);
+	if (!channel_count.has_value()) {
+		return tl::unexpected(
+		    fmt::format("{}, channel_count error: {}\n", error_str, channel_count.error()));
+	}
+
+	uint32_t combined_channels = channel_count.value().combined_count;
+
+	// Seems to be the DPDK logic
+	if (combined_channels == 0)
+		combined_channels = 1;
+
+	if (total_queues != combined_channels) {
+		return tl::unexpected(fmt::format(
+		    "{} Running sanicdns with '-w {}' requires {} queues (current {}). "
+		    "Configure using 'sudo ethtool -L {} combined {}'\n",
+		    error_str, num_cores, total_queues, combined_channels, dev_name, total_queues));
+	}
+
+	return {};
+}
+
 rte_malloc_socket_stats GetMemoryUsage() {
 	rte_malloc_socket_stats sock_stats{};
 
@@ -564,21 +589,11 @@ int main(int argc, char** argv) {
 	const uint16_t total_queues = num_workers + (NIC_OPTS::queue_for_main_thread ? 1 : 0);
 
 	if constexpr (NIC_OPTS::make_af_xdp_socket) {
-		const auto dev_name = UNWRAP_OR_RETURN_VAL(
+		auto dev_name = UNWRAP_OR_RETURN_VAL(
 		    FixedName<IFNAMSIZ>::init(ethernet_config.device_name), -1);
-
-		auto channel_count = net_info::get_combined_channel_count(dev_name);
-		if (!channel_count.has_value()) {
-			fmt::print("{}, channel_count error: {}\n", error_str,
-			    channel_count.error());
-			return -1;
-		}
-
-		if (total_queues != channel_count.value()) {
-			fmt::print("{} Running sanicdns with '-w {}' requires {} combined queues. "
-			           "Configure using 'sudo ethtool -L {} combined {}'\n",
-			    error_str, user_config.cores, total_queues, ethernet_config.device_name,
-			    total_queues);
+		auto res = VerifyQueues(dev_name, user_config.cores, total_queues);
+		if (!res) {
+			fmt::print("{} {}", error_str, res.error());
 			return -1;
 		}
 	}

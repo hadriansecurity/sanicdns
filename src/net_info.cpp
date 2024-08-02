@@ -211,8 +211,7 @@ tl::expected<net_info::RouteInfo, std::string> net_info::get_route_info(
 	return routes_map[iface];
 }
 
-tl::expected<uint32_t, std::string> net_info::get_combined_channel_count(
-    FixedName<IFNAMSIZ> iface) {
+tl::expected<ethtool_channels, std::string> net_info::get_channel_count(FixedName<IFNAMSIZ> iface) {
 	int if_idx = if_nametoindex(iface.c_str());
 	if (if_idx < 0) {
 		return tl::unexpected(fmt::format("Cannot get index for {}", iface));
@@ -237,5 +236,5 @@ tl::expected<uint32_t, std::string> net_info::get_combined_channel_count(
 	}
 
 	close(fd);
-	return ethchannels.combined_count;
+	return ethchannels;
 }
