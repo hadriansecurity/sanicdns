@@ -1,0 +1,43 @@
+name: Build and Release Static
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      uses: docker/build-push-action@v6
+      with:
+        file: ./Dockerfile.build_static
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        outputs: type=local,dest=sanicdns_af_xdp
+        build-args: |
+          DPDK_PLATFORM=generic
+    
+    - name: Compress build outputs
+      run: |
+        cd outputs
+        tar czf sanicdns_af_xdp.tar.gz ./outputs
+    
+    - name: Upload build artifacts to release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./sanicdns_af_xdp.tar.gz
+        asset_name: sanicdns_af_xdp.tar.gz
+        asset_content_type: application/gzip

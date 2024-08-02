@@ -1,0 +1,12 @@
+[submodule "lib/spdlog"]
+	path = lib/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "lib/googletest"]
+	path = lib/googletest
+	url = https://github.com/google/googletest/
+[submodule "lib/benchmark"]
+	path = lib/benchmark
+	url = https://github.com/google/benchmark.git
+[submodule "lib/glaze"]
+	path = lib/glaze
+	url = https://github.com/stephenberry/glaze.git

@@ -1,0 +1,104 @@
+diff a/src/main.cpp b/src/main.cpp	(rejected hunks)
+@@ -49,8 +49,9 @@
+ #define TX_PKT_BURST 32
+ #define RX_PKT_BURST 64
+ 
+-#define DST_IPS \
+-	{ "127.0.0.1" }
++const std::array DST_IPS = {
++#include "resolvers.txt" 
++};
+ 
+ // Echo server settings
+ // #define ECHO_SERVER_ENABLE
+@@ -631,43 +632,45 @@ int WorkerFunc(std::stop_token stop_threads, uint16_t worker_id, WorkerParams wo
+ 		for (size_t p = 0; p < num_parsed_pkts; p++) {
+ 			PacketMetaData *meta_data = DNSPacketParser::GetMetaData(parsed_pkts[p]);
+ 
++	                // std::cout << meta_data->src_ip.s_addr << "\n";
++
+ 			auto [buffer_loc, worker_id_pkt] = UnpackPacketParams(meta_data->dst_port,
+ 			    DNSPacketParser::GetId(parsed_pkts[p]));
+ 
+ 			if (worker_id_pkt != worker_id) {
+-				scanner_info_logger->warn(
+-				    "Worker id error: expected {} received {}", worker_id,
+-				    worker_id_pkt);
++				// scanner_info_logger->warn(
++				//     "Worker id error: expected {} received {}", worker_id,
++				//     worker_id_pkt);
+ 				DNSPacketParser::FreeDNSPacketMbuf(parsed_pkts[p]);
+ 				continue;
+ 			}
+ 
+ 			if (buffer_loc > worker_params.buffer_size) {
+-				scanner_info_logger->warn(
+-				    "Too big buffer id: expected max {} received {}",
+-				    worker_params.buffer_size, buffer_loc);
++				// scanner_info_logger->warn(
++				//     "Too big buffer id: expected max {} received {}",
++				    // worker_params.buffer_size, buffer_loc);
+ 				DNSPacketParser::FreeDNSPacketMbuf(parsed_pkts[p]);
+ 				continue;
+ 			}
+ 
+ 			if (request_buffer[buffer_loc].request == nullptr) {
+-				QuestionParsed *question =
+-				    DNSPacketParser::GetQuestion(parsed_pkts[p]);
+-				scanner_info_logger->warn("Request with name {} in location {:X} "
+-							  "already processed",
+-				    question->name, buffer_loc);
++				// QuestionParsed *question =
++				//     DNSPacketParser::GetQuestion(parsed_pkts[p]);
++				// scanner_info_logger->warn("Request with name {} in location {:X} "
++				// 			  "already processed",
++				//     question->name, buffer_loc);
+ 				DNSPacketParser::FreeDNSPacketMbuf(parsed_pkts[p]);
+ 				continue;
+ 			}
+ 
+ 			if (QuestionEqual(meta_data, request_buffer[buffer_loc], parsed_pkts[p]) ==
+ 			    false) {
+-				QuestionParsed *question =
+-				    DNSPacketParser::GetQuestion(parsed_pkts[p]);
+-				scanner_info_logger->warn(
+-				    "Packet mismatch: q:{}, r:{} with location {:X}",
+-				    request_buffer[buffer_loc].request->domain_name, question->name,
+-				    buffer_loc);
++				// QuestionParsed *question =
++				//     DNSPacketParser::GetQuestion(parsed_pkts[p]);
++				// scanner_info_logger->warn(
++				//     "Packet mismatch: q:{}, r:{} with location {:X}",
++				//     request_buffer[buffer_loc].request->domain_name, question->name,
++				//     buffer_loc);
+ 
+ 				DNSPacketParser::FreeDNSPacketMbuf(parsed_pkts[p]);
+ 				continue;
+@@ -681,7 +684,7 @@ int WorkerFunc(std::stop_token stop_threads, uint16_t worker_id, WorkerParams wo
+ 			to_free_rx[to_free_rx_cnt++] = request_buffer[buffer_loc].request;
+ 			request_buffer[buffer_loc].request = nullptr;
+ 
+-			LogAnswer(output_logger.get(), parsed_pkts[p]);
++			// LogAnswer(output_logger.get(), parsed_pkts[p]);
+ 
+ 			DnsRCode r_code = DNSPacketParser::GetRCode(parsed_pkts[p]);
+ 
+@@ -1050,7 +1053,7 @@ int main(int argc, char **argv) {
+ 		std::array<in_addr_t, dest_ips_string.size()> dst_ips;
+ 
+ 		for (size_t i = 0; i < dst_ips.size(); i++) {
+-			inet_pton(AF_INET, dest_ips_string[i], &dst_ips[i]);
++inet_pton(AF_INET, dest_ips_string[i], &dst_ips[i]);
+ 		}
+ 
+ 		in_addr_t own_ip = args_parsed.own_ip;
+@@ -1275,6 +1278,9 @@ int main(int argc, char **argv) {
+ 					    }
+ 
+ 					    request.src_ip.ipv4_addr = own_ip;
++					    // spdlog::info(dst_ips[ip_cnt]);
++
++					    // std::cout << dst_ips[ip_cnt] << "\n";
+ 
+ 					    auto ip_cnt_temp = ip_cnt++;
+ 					    for (int i = 0; i < 4; i++) {
