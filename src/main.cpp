@@ -180,10 +180,9 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 
 	auto& resolvers =
 	    parser["resolvers"]
-		.description("Resolvers (default 1.1.1.1,1.0.0.1), either:\n   1. Comma-seperated "
+		.description("Resolvers, either:\n   1. Comma-seperated "
 			     "list of IP's\n   2. File with a resolver specified on each line")
-		.type(po::string)
-		.fallback("1.1.1.1,1.0.0.1");
+		.type(po::string);
 
 	auto& rcodes_filters = parser["rcodes"]
 	                           .description("Only output results with these DNS return codes\n"
@@ -208,7 +207,7 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 	                        .abbreviation('o')
 	                        .description("output path (default: output.txt)")
 	                        .type(po::string)
-	                        .fallback("out.txt");
+	                        .fallback("output.txt");
 
 	auto& output_raw = parser["output-raw"].description(
 	    "output raw DNS packets in hex (from DNS header to end of packet)");
@@ -304,6 +303,10 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 	config.xdp_path = xdp_path.get().string;
 #endif
 
+	if (!resolvers.was_set()) {
+		fmt::print("{} provide resolvers\n", error_str);
+		return std::nullopt;
+	}
 	config.resolvers = ({
 		tl::expected res = ParseResolvers(resolvers.get().string);
 		if (!res) {
