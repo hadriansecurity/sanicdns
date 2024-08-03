@@ -3,20 +3,29 @@
 # Function to check system requirements
 check_requirements() {
     # Check OS
-    if [[ "$(uname)" != "Linux" ]]; then
-        echo "Error: sanicdns is only compatible with Linux systems."
+    os_type=$(uname)
+    if [[ "$os_type" != "Linux" ]]; then
+        echo "Error: sanicdns is only compatible with Linux systems, detected $os_type."
         exit 1
     fi
 
     # Check architecture
-    if [[ "$(uname -m)" != "x86_64" ]]; then
-        echo "Error: sanicdns requires x86_64 architecture."
+    arch=$(uname -m)
+    if [[ "$arch" != "x86_64" ]]; then
+        echo "Error: sanicdns requires x86_64 architecture, detected $arch."
         exit 1
     fi
 
-    # Check kernel version
     kernel_version=$(uname -r | cut -d. -f1,2)
-    if ! awk -v ver="$kernel_version" 'BEGIN{if (ver < 5.11) exit 1; exit 0}'; then
+
+    # Convert kernel version to numerical form for comparison
+    kernel_major=$(echo $kernel_version | cut -d. -f1)
+    kernel_minor=$(echo $kernel_version | cut -d. -f2)
+
+    echo "Detected kernel version $kernel_version"
+
+    # Check if the kernel version is less than 5.11
+    if [ $kernel_major -lt 5 ] || { [ $kernel_major -eq 5 ] && [ $kernel_minor -lt 11 ]; }; then
         echo "Error: sanicdns requires kernel version 5.11 or higher."
         exit 1
     fi
@@ -50,7 +59,6 @@ find_and_download_release() {
     echo "Attempting to download sanicdns version $version..."
     if curl -sL -o sanicdns_af_xdp.tar.gz "$url"; then
         echo "Successfully downloaded sanicdns version $version"
-        echo "Installing sanicdns version $version"
         return 0
     else
         echo "Failed to download sanicdns version $version"
