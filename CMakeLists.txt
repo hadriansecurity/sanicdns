@@ -14,6 +14,22 @@ option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)
 option(BUILD_STATIC "Build a statically linked executable" OFF)
 option(BUILD_TESTS "Build the tests" OFF)
 option(BUILD_DOCS "Build the documentation" OFF)
+option(BUILD_SANICDNS "Build sanicdns" ON)
+
+# Path Definitions
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules/")
+
+###############################################################################
+## documentation ##############################################################
+###############################################################################
+
+if(BUILD_DOCS)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/docs)
+endif()
+
+if(NOT BUILD_SANICDNS)
+    return()
+endif()
 
 if (${BUILD_STATIC})
     message("Building statically linked executable")
@@ -29,9 +45,6 @@ endif()
 # link_libraries(${NUMA_LIBRARY} atomic curses uring bpf xdp z zstd elf)
 
 add_definitions(-DSPDLOG_NO_EXCEPTIONS)
-
-# Path Definitions
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
 # Compiler Flags
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mssse3 -msse4.2")
@@ -161,11 +174,3 @@ elseif("${NIC_TYPE}" STREQUAL "I40E")
 else()
 	message(FATAL_ERROR "Invalid NIC type detected: ${NIC_TYPE}")
 endif()
-
-###############################################################################
-## documentation ##############################################################
-###############################################################################
-
-if(BUILD_DOCS)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/docs)
-endif(BUILD_DOCS)
