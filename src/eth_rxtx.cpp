@@ -203,18 +203,18 @@ tl::expected<EthRxTx<opts>, std::string> EthRxTx<opts>::init(const EthDevConf &c
 		return tl::unexpected(fmt::format("Cannot start ethernet port {}: {}", portid,
 		    rte_strerror(rte_errno)));
 
-	while (1) {
-		rte_eth_link link_info{};
-		retval = rte_eth_link_get(portid, &link_info);
-		if (retval != 0)
-			return tl::unexpected(fmt::format("Cannot get link info for port {}: {}",
-			    portid, rte_strerror(rte_errno)));
+	// while (1) {
+	// 	rte_eth_link link_info{};
+	// 	retval = rte_eth_link_get(portid, &link_info);
+	// 	if (retval != 0)
+	// 		return tl::unexpected(fmt::format("Cannot get link info for port {}: {}",
+	// 		    portid, rte_strerror(rte_errno)));
 
-		if (link_info.link_status == RTE_ETH_LINK_UP)
-			break;
+	// 	if (link_info.link_status == RTE_ETH_LINK_UP)
+	// 		break;
 
-		rte_pause();
-	}
+	// 	rte_pause();
+	// }
 
 	/* Display the port MAC address. */
 	printf("Port %u MAC: %02" PRIx8 " %02" PRIx8 " %02" PRIx8 " %02" PRIx8 " %02" PRIx8
