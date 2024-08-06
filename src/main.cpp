@@ -809,61 +809,68 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	//
 	// EthDevConf eth_config2{};
-	//
+
 	// eth_config2.nb_rx_descrs = 4096;
 	// eth_config2.nb_tx_descrs = 4096;
-	//
+
 	// eth_config2.nb_tx_queues = 1;
 	// eth_config2.nb_rx_queues = 1;
 
 	// auto rxtx_if2 = ({
-	// 	tl::expected res = EthRxTx<I40E_OPTS>::init(eth_config2, "0000:2e:00.1",
-	// rxtx_pool.get()); 	if (!res) { 		spdlog::error("Failed to initialize NIC:
-	// {}", res.error()); 		return -1;
+	// 	tl::expected res =
+	// 	    EthRxTx<I40E_OPTS>::init(eth_config2, "0000:2e:00.1", rxtx_pool.get());
+	// 	if (!res) {
+	// 		spdlog::error("Failed to initialize NIC: {}", res.error());
+	// 		return -1;
 	// 	}
 	// 	std::move(*res);
 	// });
 
-	// std::ignore = thread_manager.LaunchThread([] (std::stop_token stp, EthRxTx<I40E_OPTS>&
-	// rxtx_if2, RTEMempool<DefaultPacket, MbufType::Pkt>&rxtx_pool) { 	uint64_t
-	// total_packets{}; 	while(!stp.stop_requested()) { 		auto recvd =
-	// rxtx_if2.RcvPackets<RX_PKT_BURST>(0); 		for (auto& pkt : recvd) {
-	// auto eth_hdr = &pkt.data<struct rte_ether_hdr>(); 			rte_ipv4_hdr
-	// *ipv4_hdr = (rte_ipv4_hdr *) (eth_hdr + 1); 			rte_udp_hdr *udp_hdr =
-	// (rte_udp_hdr *) (ipv4_hdr + 1); 			DnsHeader *dns_hdr = (DnsHeader *)
-	// (udp_hdr + 1);
-	//
-	// 			std::swap(eth_hdr->src_addr, eth_hdr->dst_addr);
-	// 			auto src_ip_old = ipv4_hdr->src_addr;
-	// 			ipv4_hdr->src_addr = ipv4_hdr->dst_addr;
-	// 			ipv4_hdr->dst_addr = src_ip_old;
-	//
-	// 			auto src_port_old = udp_hdr->src_port;
-	// 			udp_hdr->src_port = udp_hdr->dst_port;
-	// 			udp_hdr->dst_port = src_port_old;
-	//
-	// 			dns_hdr->qr = 1;
-	// 			dns_hdr->rcode = (unsigned char) DnsRCode::R_NXDOMAIN;
-	//
-	// 			pkt.l2_len = sizeof(rte_ether_hdr);
-	// 			pkt.l3_len = sizeof(rte_ipv4_hdr);
-	// 			pkt.l4_len = sizeof(rte_udp_hdr);
-	//
-	// 			pkt.nb_segs = 1;
-	//
-	// 			rxtx_if2.PreparePktCksums<DefaultPacket, L3Type::Ipv4,
-	// L4Type::UDP>(pkt); 			total_packets++;
-	// 		}
-	//
-	// 		rxtx_if2.PreparePackets(0, recvd);
-	// 		rxtx_if2.SendPackets(0, std::move(recvd));
-	// 	}
-	//
-	// 	spdlog::info("Pkts: {}", total_packets);
-	// 	return 0;
-	//   }, std::ref(rxtx_if2), std::ref(rxtx_pool));
+	// std::ignore = thread_manager.LaunchThread(
+	//     [](std::stop_token stp, EthRxTx<I40E_OPTS>& rxtx_if2,
+	// 	RTEMempool<DefaultPacket, MbufType::Pkt>& rxtx_pool) {
+	// 	    uint64_t total_packets{};
+	// 	    while (!stp.stop_requested()) {
+	// 		    auto recvd = rxtx_if2.RcvPackets<RX_PKT_BURST>(0);
+	// 		    for (auto& pkt : recvd) {
+	// 			    auto eth_hdr = &pkt.data<struct rte_ether_hdr>();
+	// 			    rte_ipv4_hdr* ipv4_hdr = (rte_ipv4_hdr*) (eth_hdr + 1);
+	// 			    rte_udp_hdr* udp_hdr = (rte_udp_hdr*) (ipv4_hdr + 1);
+	// 			    DnsHeader* dns_hdr = (DnsHeader*) (udp_hdr + 1);
+
+	// 			    std::swap(eth_hdr->src_addr, eth_hdr->dst_addr);
+	// 			    auto src_ip_old = ipv4_hdr->src_addr;
+	// 			    ipv4_hdr->src_addr = ipv4_hdr->dst_addr;
+	// 			    ipv4_hdr->dst_addr = src_ip_old;
+
+	// 			    auto src_port_old = udp_hdr->src_port;
+	// 			    udp_hdr->src_port = udp_hdr->dst_port;
+	// 			    udp_hdr->dst_port = src_port_old;
+
+	// 			    dns_hdr->qr = 1;
+	// 			    dns_hdr->rcode = (unsigned char) DnsRCode::R_NXDOMAIN;
+
+	// 			    pkt.l2_len = sizeof(rte_ether_hdr);
+	// 			    pkt.l3_len = sizeof(rte_ipv4_hdr);
+	// 			    pkt.l4_len = sizeof(rte_udp_hdr);
+
+	// 			    pkt.nb_segs = 1;
+
+	// 			    rxtx_if2
+	// 				.PreparePktCksums<DefaultPacket, L3Type::Ipv4, L4Type::UDP>(
+	// 				    pkt);
+	// 			    total_packets++;
+	// 		    }
+
+	// 		    rxtx_if2.PreparePackets(0, recvd);
+	// 		    rxtx_if2.SendPackets(0, std::move(recvd));
+	// 	    }
+
+	// 	    spdlog::info("Pkts: {}", total_packets);
+	// 	    return 0;
+	//     },
+	//     std::ref(rxtx_if2), std::ref(rxtx_pool));
 
 	/***************************************************
 	***** Main loop dispatches domains to workers *****
