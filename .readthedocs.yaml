@@ -7,12 +7,13 @@ build:
   apt_packages:
     - cmake
     - ninja-build
-  commands:
-    - mkdir build
-    - cmake -B build -DBUILD_DOCS=ON -DNIC_TYPE=AF_XDP
-    - ninja -C build Sphinx
-    - mkdir --parents $READTHEDOCS_OUTPUT/html/
-    - cp -r build/docs/sphinx/html $READTHEDOCS_OUTPUT/html/ 
+  jobs:
+    pre_build:
+      - mkdir build
+      - cmake -B build -DBUILD_DOCS=ON -DNIC_TYPE=AF_XDP
+      - ninja -C build Sphinx
+      - mkdir --parents $READTHEDOCS_OUTPUT/html/
+      - cp -r build/docs/sphinx/html $READTHEDOCS_OUTPUT/html/ 
     
 python:
   install:
