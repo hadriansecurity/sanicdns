@@ -44,3 +44,4 @@ compile_commands.json
 
 # Generated files
 include/version.h
+/docs/source/api/**

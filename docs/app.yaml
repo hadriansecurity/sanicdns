@@ -1,0 +1,36 @@
+service: sanic-dns-docs
+runtime: python312
+
+handlers:
+# Serve HTML files.
+- url: /(.*\.html)
+  static_files: sphinx/html/\1
+  upload: sphinx/html/(.*\.html)
+  mime_type: text/html
+
+# Serve static files (like CSS, JS, images).
+- url: /_static/(.+)
+  static_files: sphinx/html/_static/\1
+  upload: sphinx/html/_static/(.+)
+
+- url: /api/(.+)
+  static_files: sphinx/html/api/\1
+  upload: sphinx/html/api/(.+)
+
+# - url: /_images/(.+)
+#   static_files: sphinx/html/_images/\1
+#   upload: sphinx/html/_images/(.+)
+
+# - url: /_sphinx_design_static/(.+)
+#   static_files: sphinx/html/_sphinx_design_static/\1
+#   upload: sphinx/html/_sphinx_design_static/(.+)
+
+- url: /_sources/(.+)
+  static_files: sphinx/html/_sources/\1
+  upload: sphinx/html/_sources/(.+)
+
+# Optionally, redirect requests for '/' to 'index.html'.
+- url: /
+  static_files: sphinx/html/index.html
+  upload: sphinx/html/index.html
+  mime_type: text/html

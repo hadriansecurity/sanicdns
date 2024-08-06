@@ -12,7 +12,8 @@ set(CMAKE_GENERATOR Ninja)
 option(OPTIMIZE_FOR_NATIVE "Build with -march=native" OFF)
 option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." FALSE)
 option(BUILD_STATIC "Build a statically linked executable" OFF)
-option(BUILD_TESTS "Build a statically linked executable" OFF)
+option(BUILD_TESTS "Build the tests" OFF)
+option(BUILD_DOCS "Build the documentation" OFF)
 
 if (${BUILD_STATIC})
     message("Building statically linked executable")
@@ -160,3 +161,11 @@ elseif("${NIC_TYPE}" STREQUAL "I40E")
 else()
 	message(FATAL_ERROR "Invalid NIC type detected: ${NIC_TYPE}")
 endif()
+
+###############################################################################
+## documentation ##############################################################
+###############################################################################
+
+if(BUILD_DOCS)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/docs)
+endif(BUILD_DOCS)
