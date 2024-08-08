@@ -1,0 +1,60 @@
+name: Build & Publish Docs
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_test:
+    name: Build and publish docs
+    runs-on: ubuntu-24.04
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          path: src/
+          submodules: recursive
+      
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential \
+                            git \
+                            cmake \
+                            ninja-build \
+                            python3 \
+                            python3-sphinx \
+                            python3-sphinx-design \
+                            python3-breathe \
+                            python3-exhale \
+                            python3-sphinx-rtd-theme
+
+      - name: Make build dir
+        run: mkdir src/build
+
+      - name: Generate build files
+        run: cmake -S src/ -B src/build -DCMAKE_GENERATOR=Ninja -DCMAKE_BUILD_TYPE=Debug -DNIC_TYPE=AF_XDP -DBUILD_DOCS=ON -DBUILD_SANICDNS=OFF
+
+      - name: Build docs
+        run: ninja -C src/build Sphinx
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'src/build/docs/sphinx/html'
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
