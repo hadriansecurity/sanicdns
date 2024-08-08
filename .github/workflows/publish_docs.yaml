@@ -3,7 +3,7 @@ name: Build & Publish Docs
 on:
   push:
     branches:
-      - docs
+      - main
 
 jobs:
   build_and_test:
