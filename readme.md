@@ -18,6 +18,10 @@ SanicDNS will not (yet):
 - Perform wildcard detection
 - Do recursive resolving, you'll need external resolvers
 
+## How does it work?
+
+Good question. For more specific details see the [getting started](https://et.phoneho.me/sanicdns/getting_started.html) and [technical overview](https://et.phoneho.me/sanicdns/technical_overview.html) pages in the docs.
+
 ## What do I need?
 
 To use SanicDNS you'll need:
@@ -34,6 +38,7 @@ This section provides instructions for installing precompiled AF_XDP binaries to
 ```bash
 curl -sSL https://raw.githubusercontent.com/hadriansecurity/sanicdns/main/install.sh | sudo bash
 ```
+For compiling from source see the [docs](https://et.phoneho.me/sanicdns/compiling_from_source.html).
 
 ## Getting started
 
