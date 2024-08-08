@@ -11,6 +11,7 @@ Welcome to SanicDNS's documentation!
    :caption: Contents:
 
    getting_started
+   compiling_from_source
    technical_overview
    api/library_root
 

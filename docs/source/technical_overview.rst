@@ -26,10 +26,6 @@ A :struct:`Request` is the data structure used to pass DNS requests to workers t
 
 The parameters ``dst_mac``, ``src_ip`` and ``q_type`` are currently the same in each instance of the :struct:`Request` structure, it is assumed that the router configuration does not change during the runtime of the bruteforcer and ``q_type`` is filled from the user-provided question type.
 
-The ``dst_ip`` and ``num_ips`` paramters are used to control the destination IP that the worker will send the packet to. The worker first uses ``dst_ip[0]`` as the destination IP and cycles through the IP when retrying a request. This is to prevent a faulty / unresponsive resolver from blocking the request.
-
-The ``dst_ip`` slots in the request are filled to ``REQUEST_MAX_IPS`` by filling them with consecutive user-supplied resolver IP's. The user-supplied resolvers are also rotated to ensure that the load is distributed evenly over all resolvers.
-
 To fetch domains from the input file with domains to resolve the :class:`InputReader` is used. This is an optimized `SIMD <https://en.wikipedia.org/wiki/Single_instruction,_multiple_data>`_ file reader that can return an individual domain from the input file using :func:`InputReader::GetDomain`. This input domain is read in the Request's ``name`` field.
 
 .. _technical_overview_the_workers:
@@ -55,17 +51,17 @@ In these steps the worker first executes the TX part and afterwards the RX part.
 
 #. **Worker TX: Timeout queue**
    
-   When a worker enters the loop, it first checks whether any requests have reached the maximum timeout. It retrieves the requests that have been sent least recently by consuming the :member:`WorkerContext::timeouts` queue from the back until it identifies a request that is under the timeout limit. These requests are added back into the :member:`WorkerContext::ready_for_send` queue so they will be retransmitted. For a more detailed overview of the timeout mechanism, see :ref:`technical_overview_timout_queue`.
+   When a worker enters the loop, it first checks whether any requests have reached the maximum timeout. It retrieves the requests that have been sent least recently by consuming the :member:`WorkerContext::timeout_list` queue from the back until it identifies a request that is under the timeout limit. These requests are added back into the :member:`WorkerContext::ready_for_send_list` queue so they will be retransmitted. For a more detailed overview of the timeout mechanism, see :ref:`technical_overview_timout_queue`.
 
 #. **Worker TX: Fetch requests**
 
    After all timeouts have been submitted for retransmission, new Requests are fetched from the distribution ring. The requests all originate from the main thread that is responsible for parsing the input files and constructing the requests.
 
-   The requests are put in a free spot in the :member:`WorkerContext::request_buffers`. The worker can handle as many requests concurrently as there are spaces available in the request buffers. The worker needs to keep a copy of all requests currently in flight in order to be able to effectively handle retries. After the request is added to the request buffer, the request is added to the :member:`WorkerContext::ready_for_send` queue to schedule it for transmission.
+   The requests are put in a free spot in the :member:`WorkerContext::request_containers`. The worker can handle as many requests concurrently as there are spaces available in the request buffers. The worker needs to keep a copy of all requests currently in flight in order to be able to effectively handle retries. After the request is added to the request buffer, the request is added to the :member:`WorkerContext::ready_for_send_list` queue to schedule it for transmission.
    
 #. **Packet construction and sending**
 
-   In this step the requests in the :member:`WorkerContext::ready_for_send` queue are consumed, constructed and sent. In the :member:`WorkerContext::request_buffers` all requests are saved in the :struct:`Request` format, when a request is transmitted, the DNS packet always needs to be constructed from scratch. The DNS packet is constructed using the :member:`DNSPacketConstructor::ConstructIpv4DNSPacket`.
+   In this step the requests in the :member:`WorkerContext::ready_for_send_list` queue are consumed, constructed and sent. In the :member:`WorkerContext::request_containers` all requests are saved in the :struct:`Request` format, when a request is transmitted, the DNS packet always needs to be constructed from scratch. The DNS packet is constructed using the :member:`DNSPacketConstructor::ConstructIpv4DNSPacket`.
 
    The rate-limiting system of the DNS bruteforcer is built into this step as well. Each worker has a rate-limit allowance of the total rate limit divided by the number of workers.
 
@@ -81,10 +77,21 @@ In these steps the worker first executes the TX part and afterwards the RX part.
 
    When software-based packet redistribution is necessary, each worker exposes a distribution ring where other workers can submit packets. When a worker has parsed a block of packets, it orders the packets per destination worker and submits the packets to the correct distribution queue.
 
+#. **Packet matching**
+
+   TODO
+
 .. _technical_overview_timout_queue:
 Timeout queue
 -------------
+TODO
 
 .. _technical_overview_packet_distribution:
 Packet redistribution
 ---------------------
+TODO
+
+.. _technical_overview_fetching_ips_and_mac_addresses:
+Fetching IP and MAC addresses
+---------------------
+TODO
