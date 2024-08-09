@@ -53,8 +53,19 @@ For compiling from source see the [docs](https://et.phoneho.me/sanicdns/compilin
    ```
 3. Run the tool
    ```bash
-   sudo sanicdns -i majestic_million.txt -l log.txt -r 2000 -c 10000 --resolvers 1.1.1.1,1.0.0.1
+   sudo sanicdns -i majestic_million.txt -l log.txt -r 2000 -c 10000 --resolvers 1.1.1.1,1.0.0.1 -o out.txt
    ````
+
+## Common use cases
+Resolving all AAAA records with the resolvers specified in resolvers.txt and a timeout of 3s:
+```bash
+sudo sanicdns -i majestic_million.txt -l log.txt -r 10000 -c 10000 --resolvers resolvers.txt -t 3000 -q T_AAAA
+````
+Subdomain bruteforcing test.com, 15 retries:
+```bash
+sudo sanicdns -i subdomains.txt --postfix .test.com -r 2000 -c 10000 --resolvers resolvers.txt -o out.txt --num-retries 15
+````
+
 
 ## Command line flags
 ```
