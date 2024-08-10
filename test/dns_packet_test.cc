@@ -208,9 +208,9 @@ void CheckPacket(const TestPacket& packet) {
 
 	CheckFixedName(packet.qname, parsed_packet->question);
 
-	EXPECT_EQ(packet.answer_ref_records.size(), parsed_packet->ans.size());
-	EXPECT_EQ(packet.additional_ref_records.size(), parsed_packet->add.size());
-	EXPECT_EQ(packet.auth_ref_records.size(), parsed_packet->auth.size());
+	EXPECT_EQ(packet.answer_ref_records.size(), parsed_packet->data.ans.size());
+	EXPECT_EQ(packet.additional_ref_records.size(), parsed_packet->data.add.size());
+	EXPECT_EQ(packet.auth_ref_records.size(), parsed_packet->data.auth.size());
 
 	std::string out{};
 	glz::write_json(*parsed_packet, out);
@@ -218,13 +218,13 @@ void CheckPacket(const TestPacket& packet) {
 	std::cout << out << '\n';
 
 	for (uint16_t i = 0; i < packet.answer_ref_records.size(); i++)
-		CheckRecord(packet.answer_ref_records[i], parsed_packet->ans.get_data(i));
+		CheckRecord(packet.answer_ref_records[i], parsed_packet->data.ans.get_data(i));
 
 	for (uint16_t i = 0; i < packet.additional_ref_records.size(); i++)
-		CheckRecord(packet.additional_ref_records[i], parsed_packet->add.get_data(i));
+		CheckRecord(packet.additional_ref_records[i], parsed_packet->data.add.get_data(i));
 
 	for (uint16_t i = 0; i < packet.auth_ref_records.size(); i++)
-		CheckRecord(packet.auth_ref_records[i], parsed_packet->auth.get_data(i));
+		CheckRecord(packet.auth_ref_records[i], parsed_packet->data.auth.get_data(i));
 }
 
 TEST(DnsPacketParserTest, A_record) {

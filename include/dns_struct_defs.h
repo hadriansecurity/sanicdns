@@ -122,9 +122,11 @@ struct DNSPacket {
 
 	bool rec_capped; // Records had to be truncated
 
-	RTEMbufArray<ResourceRecord, MAX_RECORDS> ans;
-	RTEMbufArray<ResourceRecord, MAX_RECORDS> auth;
-	RTEMbufArray<ResourceRecord, MAX_RECORDS> add;
+    struct Data {
+        RTEMbufArray<ResourceRecord, MAX_RECORDS> ans;
+        RTEMbufArray<ResourceRecord, MAX_RECORDS> auth;
+        RTEMbufArray<ResourceRecord, MAX_RECORDS> add;
+    } data;
 
 	uint16_t GetWorkerId() const {
 		return ((dns_id & 0xFC00) >> 10) - 1;
@@ -146,9 +148,11 @@ private:
 		q_type(q_type),
 		r_code(r_code),
 		rec_capped(rec_capped),
-		ans(std::move(ans)),
-		auth(std::move(auth)),
-		add(std::move(add)) { }
+        data{
+            .ans{std::move(ans)},
+            .auth{std::move(auth)},
+            .add{std::move(add)},
+        } { }
 };
 
 struct DNSPacketDistr {
