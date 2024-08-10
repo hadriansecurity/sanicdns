@@ -15,23 +15,23 @@
  * @brief Question types for a DNS request
  */
 enum class DnsQType {
-	T_A = 1,      // Ipv4 address
-	T_NS = 2,     // Nameserver
-	T_CNAME = 5,  // Canonical name
-	T_SOA = 6,    // Start of authority zone
-	T_PTR = 12,   // Domain name pointer
-	T_MX = 15,    // Mail server
-	T_TXT = 16,   // Txt record
-	T_AAAA = 28,  // Ipv6 address
-	T_DNAME = 39, // Delegation name record
-	T_OPT = 41    // Edns opt record
+	A = 1,      // Ipv4 address
+	NS = 2,     // Nameserver
+	CNAME = 5,  // Canonical name
+	SOA = 6,    // Start of authority zone
+	PTR = 12,   // Domain name pointer
+	MX = 15,    // Mail server
+	TXT = 16,   // Txt record
+	AAAA = 28,  // Ipv6 address
+	DNAME = 39, // Delegation name record
+	OPT = 41    // Edns opt record
 };
 
 template <>
 struct glz::meta<DnsQType> {
 	using enum DnsQType;
 	static constexpr auto value =
-	    enumerate(T_A, T_NS, T_CNAME, T_SOA, T_PTR, T_MX, T_TXT, T_AAAA, T_DNAME, T_OPT);
+	    enumerate(A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, DNAME, OPT);
 };
 
 /**
@@ -42,39 +42,39 @@ struct glz::meta<DnsQType> {
  */
 inline const char* GetQTypeMessage(const DnsQType q_type) {
 	switch (q_type) {
-		case DnsQType::T_A:
-			return "T_A";
+		case DnsQType::A:
+			return "A";
 			break;
-		case DnsQType::T_NS:
-			return "T_NS";
+		case DnsQType::NS:
+			return "NS";
 			break;
-		case DnsQType::T_CNAME:
-			return "T_CNAME";
+		case DnsQType::CNAME:
+			return "CNAME";
 			break;
-		case DnsQType::T_DNAME:
-			return "T_DNAME";
+		case DnsQType::DNAME:
+			return "DNAME";
 			break;
-		case DnsQType::T_SOA:
-			return "T_SOA";
+		case DnsQType::SOA:
+			return "SOA";
 			break;
-		case DnsQType::T_PTR:
-			return "T_PTR";
+		case DnsQType::PTR:
+			return "PTR";
 			break;
-		case DnsQType::T_MX:
-			return "T_MX";
+		case DnsQType::MX:
+			return "MX";
 			break;
-		case DnsQType::T_TXT:
-			return "T_TXT";
+		case DnsQType::TXT:
+			return "TXT";
 			break;
-		case DnsQType::T_AAAA:
-			return "T_AAAA";
+		case DnsQType::AAAA:
+			return "AAAA";
 			break;
-		case DnsQType::T_OPT:
-			return "T_OPT";
+		case DnsQType::OPT:
+			return "OPT";
 			break;
 
 		default:
-			return "T_unknown";
+			return "unknown";
 			break;
 	}
 }
@@ -86,26 +86,26 @@ inline const char* GetQTypeMessage(const DnsQType q_type) {
  * @return DnsQType equivalent of q_type
  */
 inline std::optional<DnsQType> GetQTypeFromString(std::string_view q_type) {
-	if (q_type == "T_A") {
-		return DnsQType::T_A;
-	} else if (q_type == "T_NS") {
-		return DnsQType::T_NS;
-	} else if (q_type == "T_CNAME") {
-		return DnsQType::T_CNAME;
-	} else if (q_type == "T_DNAME") {
-		return DnsQType::T_DNAME;
-	} else if (q_type == "T_SOA") {
-		return DnsQType::T_SOA;
-	} else if (q_type == "T_PTR") {
-		return DnsQType::T_PTR;
-	} else if (q_type == "T_MX") {
-		return DnsQType::T_MX;
-	} else if (q_type == "T_TXT") {
-		return DnsQType::T_TXT;
-	} else if (q_type == "T_AAAA") {
-		return DnsQType::T_AAAA;
-	} else if (q_type == "T_OPT") {
-		return DnsQType::T_OPT;
+	if (q_type == "A") {
+		return DnsQType::A;
+	} else if (q_type == "NS") {
+		return DnsQType::NS;
+	} else if (q_type == "CNAME") {
+		return DnsQType::CNAME;
+	} else if (q_type == "DNAME") {
+		return DnsQType::DNAME;
+	} else if (q_type == "SOA") {
+		return DnsQType::SOA;
+	} else if (q_type == "PTR") {
+		return DnsQType::PTR;
+	} else if (q_type == "MX") {
+		return DnsQType::MX;
+	} else if (q_type == "TXT") {
+		return DnsQType::TXT;
+	} else if (q_type == "AAAA") {
+		return DnsQType::AAAA;
+	} else if (q_type == "OPT") {
+		return DnsQType::OPT;
 	}
 
 	return std::nullopt;
@@ -115,35 +115,35 @@ inline std::optional<DnsQType> GetQTypeFromString(std::string_view q_type) {
  * @brief Error codes for a DNS request
  */
 enum class DnsRCode {
-	R_NOERROR = 0,
-	R_FORMERROR = 1,
-	R_SERVFAIL = 2,
-	R_NXDOMAIN = 3,
-	R_NOTIMP = 4,
-	R_REFUSED = 5,
-	R_YXDOMAIN = 6,
-	R_XYRRSET = 7,
-	R_NXRRSET = 8,
-	R_NOTAUTH = 9,
-	R_NOTZONE = 10,
-	R_DSOTYPENI = 11,
-	R_BADVERS = 16,
-	R_BADKEY = 17,
-	R_BADTIME = 18,
-	R_BADMODE = 19,
-	R_BADNAM = 20,
-	R_BADALG = 21,
-	R_BADTRUNC = 22,
-	R_BADCOOKIE = 23
+	NOERROR = 0,
+	FORMERROR = 1,
+	SERVFAIL = 2,
+	NXDOMAIN = 3,
+	NOTIMP = 4,
+	REFUSED = 5,
+	YXDOMAIN = 6,
+	XYRRSET = 7,
+	NXRRSET = 8,
+	NOTAUTH = 9,
+	NOTZONE = 10,
+	DSOTYPENI = 11,
+	BADVERS = 16,
+	BADKEY = 17,
+	BADTIME = 18,
+	BADMODE = 19,
+	BADNAM = 20,
+	BADALG = 21,
+	BADTRUNC = 22,
+	BADCOOKIE = 23
 };
 
 template <>
 struct glz::meta<DnsRCode> {
 	using enum DnsRCode;
 	static constexpr auto value =
-	    enumerate(R_NOERROR, R_FORMERROR, R_SERVFAIL, R_NXDOMAIN, R_NOTIMP, R_REFUSED,
-		R_YXDOMAIN, R_XYRRSET, R_NXRRSET, R_NOTAUTH, R_NOTZONE, R_DSOTYPENI, R_BADVERS,
-		R_BADKEY, R_BADTIME, R_BADMODE, R_BADNAM, R_BADALG, R_BADTRUNC, R_BADCOOKIE);
+	    enumerate(NOERROR, FORMERROR, SERVFAIL, NXDOMAIN, NOTIMP, REFUSED,
+		YXDOMAIN, XYRRSET, NXRRSET, NOTAUTH, NOTZONE, DSOTYPENI, BADVERS,
+		BADKEY, BADTIME, BADMODE, BADNAM, BADALG, BADTRUNC, BADCOOKIE);
 };
 
 /**
@@ -154,66 +154,66 @@ struct glz::meta<DnsRCode> {
  */
 inline const char* GetRCodeMessage(const DnsRCode r_code) {
 	switch (r_code) {
-		case DnsRCode::R_NOERROR:
-			return "R_NOERROR";
+		case DnsRCode::NOERROR:
+			return "NOERROR";
 			break;
-		case DnsRCode::R_FORMERROR:
-			return "R_FORMERROR";
+		case DnsRCode::FORMERROR:
+			return "FORMERROR";
 			break;
-		case DnsRCode::R_SERVFAIL:
-			return "R_SERVFAIL";
+		case DnsRCode::SERVFAIL:
+			return "SERVFAIL";
 			break;
-		case DnsRCode::R_NXDOMAIN:
-			return "R_NXDOMAIN";
+		case DnsRCode::NXDOMAIN:
+			return "NXDOMAIN";
 			break;
-		case DnsRCode::R_NOTIMP:
-			return "R_NOTIMP";
+		case DnsRCode::NOTIMP:
+			return "NOTIMP";
 			break;
-		case DnsRCode::R_REFUSED:
-			return "R_REFUSED";
+		case DnsRCode::REFUSED:
+			return "REFUSED";
 			break;
-		case DnsRCode::R_YXDOMAIN:
-			return "R_YXDOMAIN";
+		case DnsRCode::YXDOMAIN:
+			return "YXDOMAIN";
 			break;
-		case DnsRCode::R_XYRRSET:
-			return "R_XYRRSET";
+		case DnsRCode::XYRRSET:
+			return "XYRRSET";
 			break;
-		case DnsRCode::R_NOTAUTH:
-			return "R_NOTAUTH";
+		case DnsRCode::NOTAUTH:
+			return "NOTAUTH";
 			break;
-		case DnsRCode::R_NOTZONE:
-			return "R_NOTZONE";
+		case DnsRCode::NOTZONE:
+			return "NOTZONE";
 			break;
-		case DnsRCode::R_DSOTYPENI:
-			return "R_DSOTYPENI";
+		case DnsRCode::DSOTYPENI:
+			return "DSOTYPENI";
 			break;
-		case DnsRCode::R_BADVERS:
-			return "R_BADVERS";
+		case DnsRCode::BADVERS:
+			return "BADVERS";
 			break;
-		case DnsRCode::R_BADKEY:
-			return "R_BADKEY";
+		case DnsRCode::BADKEY:
+			return "BADKEY";
 			break;
-		case DnsRCode::R_BADTIME:
-			return "R_BADTIME";
+		case DnsRCode::BADTIME:
+			return "BADTIME";
 			break;
-		case DnsRCode::R_BADMODE:
-			return "R_BADMODE";
+		case DnsRCode::BADMODE:
+			return "BADMODE";
 			break;
-		case DnsRCode::R_BADNAM:
-			return "R_BADNAM";
+		case DnsRCode::BADNAM:
+			return "BADNAM";
 			break;
-		case DnsRCode::R_BADALG:
-			return "R_BADALG";
+		case DnsRCode::BADALG:
+			return "BADALG";
 			break;
-		case DnsRCode::R_BADTRUNC:
-			return "R_BADTRUNC";
+		case DnsRCode::BADTRUNC:
+			return "BADTRUNC";
 			break;
-		case DnsRCode::R_BADCOOKIE:
-			return "R_BADCOOKIE";
+		case DnsRCode::BADCOOKIE:
+			return "BADCOOKIE";
 			break;
 
 		default:
-			return "R_unknown";
+			return "unknown";
 			break;
 	}
 }
@@ -225,44 +225,44 @@ inline const char* GetRCodeMessage(const DnsRCode r_code) {
  * @return DnsRCode corresponding to the error message
  */
 inline std::optional<DnsRCode> GetRCodeFromMessage(std::string_view error_msg) {
-	if (error_msg == "R_NOERROR")
-		return DnsRCode::R_NOERROR;
-	else if (error_msg == "R_FORMERROR")
-		return DnsRCode::R_FORMERROR;
-	else if (error_msg == "R_SERVFAIL")
-		return DnsRCode::R_SERVFAIL;
-	else if (error_msg == "R_NXDOMAIN")
-		return DnsRCode::R_NXDOMAIN;
-	else if (error_msg == "R_NOTIMP")
-		return DnsRCode::R_NOTIMP;
-	else if (error_msg == "R_REFUSED")
-		return DnsRCode::R_REFUSED;
-	else if (error_msg == "R_YXDOMAIN")
-		return DnsRCode::R_YXDOMAIN;
-	else if (error_msg == "R_XYRRSET")
-		return DnsRCode::R_XYRRSET;
-	else if (error_msg == "R_NOTAUTH")
-		return DnsRCode::R_NOTAUTH;
-	else if (error_msg == "R_NOTZONE")
-		return DnsRCode::R_NOTZONE;
-	else if (error_msg == "R_DSOTYPENI")
-		return DnsRCode::R_DSOTYPENI;
-	else if (error_msg == "R_BADVERS")
-		return DnsRCode::R_BADVERS;
-	else if (error_msg == "R_BADKEY")
-		return DnsRCode::R_BADKEY;
-	else if (error_msg == "R_BADTIME")
-		return DnsRCode::R_BADTIME;
-	else if (error_msg == "R_BADMODE")
-		return DnsRCode::R_BADMODE;
-	else if (error_msg == "R_BADNAM")
-		return DnsRCode::R_BADNAM;
-	else if (error_msg == "R_BADALG")
-		return DnsRCode::R_BADALG;
-	else if (error_msg == "R_BADTRUNC")
-		return DnsRCode::R_BADTRUNC;
-	else if (error_msg == "R_BADCOOKIE")
-		return DnsRCode::R_BADCOOKIE;
+	if (error_msg == "NOERROR")
+		return DnsRCode::NOERROR;
+	else if (error_msg == "FORMERROR")
+		return DnsRCode::FORMERROR;
+	else if (error_msg == "SERVFAIL")
+		return DnsRCode::SERVFAIL;
+	else if (error_msg == "NXDOMAIN")
+		return DnsRCode::NXDOMAIN;
+	else if (error_msg == "NOTIMP")
+		return DnsRCode::NOTIMP;
+	else if (error_msg == "REFUSED")
+		return DnsRCode::REFUSED;
+	else if (error_msg == "YXDOMAIN")
+		return DnsRCode::YXDOMAIN;
+	else if (error_msg == "XYRRSET")
+		return DnsRCode::XYRRSET;
+	else if (error_msg == "NOTAUTH")
+		return DnsRCode::NOTAUTH;
+	else if (error_msg == "NOTZONE")
+		return DnsRCode::NOTZONE;
+	else if (error_msg == "DSOTYPENI")
+		return DnsRCode::DSOTYPENI;
+	else if (error_msg == "BADVERS")
+		return DnsRCode::BADVERS;
+	else if (error_msg == "BADKEY")
+		return DnsRCode::BADKEY;
+	else if (error_msg == "BADTIME")
+		return DnsRCode::BADTIME;
+	else if (error_msg == "BADMODE")
+		return DnsRCode::BADMODE;
+	else if (error_msg == "BADNAM")
+		return DnsRCode::BADNAM;
+	else if (error_msg == "BADALG")
+		return DnsRCode::BADALG;
+	else if (error_msg == "BADTRUNC")
+		return DnsRCode::BADTRUNC;
+	else if (error_msg == "BADCOOKIE")
+		return DnsRCode::BADCOOKIE;
 
 	return std::nullopt;
 }

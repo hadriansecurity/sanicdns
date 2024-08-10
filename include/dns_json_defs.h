@@ -52,7 +52,7 @@ template <>
 struct glz::meta<ResourceRecord> {
 	using T = ResourceRecord;
 	static constexpr auto value =
-	    glz::object("n", &T::name, "t", &T::q_type, "ttl", &T::ttl, "d", &T::r_data);
+	    glz::object("name", &T::name, "type", &T::q_type, "ttl", &T::ttl, "data", &T::r_data);
 };
 
 /**
@@ -88,6 +88,6 @@ struct glz::meta<in6_addr> {
 template <>
 struct glz::meta<DNSPacket> {
 	using T = DNSPacket;
-	static constexpr auto value = glz::object("q", &T::question, "t", &T::q_type, "r",
-	    &T::r_code, "ans", &T::ans, "auth", &T::auth, "add", &T::add);
+	static constexpr auto value = glz::object("name", &T::question, "type", &T::q_type, "status",
+	    &T::r_code, "answers", &T::ans, "authorities", &T::auth, "additionals", &T::add);
 };

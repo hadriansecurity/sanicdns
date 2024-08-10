@@ -167,25 +167,25 @@ tl::expected<ResourceRecord, DNSParseError> ParseResourceRecord(std::span<const 
 	parsed_record.ttl = rte_be_to_cpu_32(response->ttl);
 	auto begin = reader;
 	switch (parsed_record.q_type) {
-		case DnsQType::T_A: {
+		case DnsQType::A: {
 			ARdata r_data;
 			r_data.ipv4_addr = *UNWRAP_OR_RETURN(AdvanceReader<InAddr>(bytes, reader));
 			parsed_record.r_data = r_data;
 			break;
 		}
-		case DnsQType::T_AAAA: {
+		case DnsQType::AAAA: {
 			AAAARdata r_data;
 			r_data.ipv6_addr = *UNWRAP_OR_RETURN(AdvanceReader<In6Addr>(bytes, reader));
 			parsed_record.r_data = r_data;
 			break;
 		}
-		case DnsQType::T_NS: {
+		case DnsQType::NS: {
 			NSRdata r_data;
 			r_data.nameserver = UNWRAP_OR_RETURN(ReadFromDNSNameFormat(bytes, reader));
 			parsed_record.r_data = r_data;
 			break;
 		}
-		case DnsQType::T_MX: {
+		case DnsQType::MX: {
 			MXRdata r_data;
 			r_data.preference = rte_be_to_cpu_16(
 			    *UNWRAP_OR_RETURN(AdvanceReader<uint16_t>(bytes, reader)));
@@ -193,25 +193,25 @@ tl::expected<ResourceRecord, DNSParseError> ParseResourceRecord(std::span<const 
 			parsed_record.r_data = r_data;
 			break;
 		}
-		case DnsQType::T_CNAME: {
+		case DnsQType::CNAME: {
 			CNAMERdata r_data;
 			r_data.cname = UNWRAP_OR_RETURN(ReadFromDNSNameFormat(bytes, reader));
 			parsed_record.r_data = r_data;
 			break;
 		}
-		case DnsQType::T_DNAME: {
+		case DnsQType::DNAME: {
 			DNAMERdata r_data;
 			r_data.dname = UNWRAP_OR_RETURN(ReadFromDNSNameFormat(bytes, reader));
 			parsed_record.r_data = r_data;
 			break;
 		}
-		case DnsQType::T_PTR: {
+		case DnsQType::PTR: {
 			PTRRdata r_data;
 			r_data.ptr = UNWRAP_OR_RETURN(ReadFromDNSNameFormat(bytes, reader));
 			parsed_record.r_data = r_data;
 			break;
 		}
-		case DnsQType::T_TXT: {
+		case DnsQType::TXT: {
 			TXTRdata r_data;
 			r_data.txt.len = 0;
 
@@ -247,7 +247,7 @@ tl::expected<ResourceRecord, DNSParseError> ParseResourceRecord(std::span<const 
 			parsed_record.r_data = r_data;
 			break;
 		}
-		case DnsQType::T_SOA: {
+		case DnsQType::SOA: {
 			SOARdata r_data;
 			r_data.m_name = UNWRAP_OR_RETURN(ReadFromDNSNameFormat(bytes, reader));
 			r_data.r_name = UNWRAP_OR_RETURN(ReadFromDNSNameFormat(bytes, reader));
@@ -268,7 +268,7 @@ tl::expected<ResourceRecord, DNSParseError> ParseResourceRecord(std::span<const 
 			parsed_record.r_data = r_data;
 			break;
 		}
-		case DnsQType::T_OPT: {
+		case DnsQType::OPT: {
 			if (reader + rte_be_to_cpu_16(response->data_len) > bytes.end())
 				return tl::unexpected(DNSParseError::OutOfBounds);
 

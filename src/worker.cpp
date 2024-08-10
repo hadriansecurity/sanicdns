@@ -210,13 +210,13 @@ void AddRequestsToReadyForSend(WorkerContext &ctx,
 void HandleParsedPacket(WorkerContext &ctx, WorkerParams &param, const DNSPacket &pkt,
     RTEMbuf<DefaultPacket> &raw_pkt, std::shared_ptr<spdlog::logger> out_logger) {
 	switch (pkt.r_code) {
-		case DnsRCode::R_NOERROR:
+		case DnsRCode::NOERROR:
 			param.counters[ctx.worker_id].noerror++;
 			break;
-		case DnsRCode::R_SERVFAIL:
+		case DnsRCode::SERVFAIL:
 			param.counters[ctx.worker_id].servfail++;
 			break;
-		case DnsRCode::R_NXDOMAIN:
+		case DnsRCode::NXDOMAIN:
 			param.counters[ctx.worker_id].nxdomain++;
 			break;
 		default:
