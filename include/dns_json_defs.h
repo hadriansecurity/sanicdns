@@ -7,6 +7,7 @@
 #include <string>
 
 #include "dns_format.h"
+#include "dns_packet_constructor.h"
 #include "dns_struct_defs.h"
 
 /**
@@ -86,8 +87,14 @@ struct glz::meta<in6_addr> {
  */
 
 template <>
+struct glz::meta<DNSPacket::Data> {
+    using T = DNSPacket::Data;
+    static constexpr auto value = glz::object("answers", &T::ans, "authorities", &T::auth, "additionals", &T::add);
+};
+
+template <>
 struct glz::meta<DNSPacket> {
 	using T = DNSPacket;
 	static constexpr auto value = glz::object("name", &T::question, "type", &T::q_type, "status",
-	    &T::r_code, "answers", &T::ans, "authorities", &T::auth, "additionals", &T::add);
+	    &T::r_code, "data", &T::data);
 };
