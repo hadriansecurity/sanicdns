@@ -187,7 +187,7 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 
 	auto& rcodes_filters = parser["rcodes"]
 	                           .description("Only output results with these DNS return codes\n"
-						"    Example: --rcodes R_NOERROR,R_SERVFAIL")
+						"    Example: --rcodes NOERROR,SERVFAIL")
 	                           .type(po::string);
 
 	auto& prefix = parser["prefix"]
@@ -219,10 +219,10 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 
 	auto& q_type = parser["q-type"]
 	                   .abbreviation('q')
-	                   .description("Question type\n (T_A, T_NS, T_CNAME, T_DNAME, T_SOA, "
-					"T_PTR, T_MX, T_TXT, T_AAAA, T_OPT)")
+	                   .description("Question type\n (A, NS, CNAME, DNAME, SOA, "
+					"PTR, MX, TXT, AAAA, OPT)")
 	                   .type(po::string)
-	                   .fallback("T_A");
+	                   .fallback("A");
 
 	if (!parser(argc, argv))
 		return std::nullopt;
@@ -361,8 +361,8 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 	config.q_type = ({
 		std::optional res = GetQTypeFromString(q_type.get().string);
 		if (!res) {
-			fmt::print("{} invalid question type {}, choose from T_A, T_NS, T_CNAME, "
-				   "T_DNAME, T_SOA, T_PTR, T_MX, T_TXT, T_AAAA, T_OPT\n",
+			fmt::print("{} invalid question type {}, choose from A, NS, CNAME, "
+				   "DNAME, SOA, PTR, MX, TXT, AAAA, OPT\n",
 			    error_str, q_type.get().string);
 			return std::nullopt;
 		}

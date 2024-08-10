@@ -65,7 +65,7 @@ size_t ConstructExamplePacketIpv4(RTEMbuf<DefaultPacket>& pkt) {
 	strcpy(qname, DOMAIN_NAME_DNS);
 	// Include NULL terminator, must be present in DNS query
 	QuestionInfo* qinfo = (QuestionInfo*) (qname + strlen(DOMAIN_NAME_DNS) + 1);
-	qinfo->qclass = rte_cpu_to_be_16((unsigned short) DnsQType::T_A);
+	qinfo->qclass = rte_cpu_to_be_16((unsigned short) DnsQType::A);
 	qinfo->qtype = rte_cpu_to_be_16(1);
 
 	const size_t total_dns_len =
@@ -131,7 +131,7 @@ size_t ConstructExamplePacketIpv6(RTEMbuf<DefaultPacket>& pkt) {
 	strcpy(qname, DOMAIN_NAME_DNS);
 	// Include NULL terminator, must be present in DNS query
 	QuestionInfo* qinfo = (QuestionInfo*) (qname + strlen(DOMAIN_NAME_DNS) + 1);
-	qinfo->qclass = rte_cpu_to_be_16((unsigned short) DnsQType::T_A);
+	qinfo->qclass = rte_cpu_to_be_16((unsigned short) DnsQType::A);
 	qinfo->qtype = rte_cpu_to_be_16(1);
 
 	const size_t total_dns_len =
@@ -179,7 +179,7 @@ TEST(DnsPacketConstructorTest, Ipv4Packet) {
 
 	size_t test_pkt_size = DNSPacketConstructor::ConstructIpv4DNSPacket(test_pkt->get(),
 	    SRC_MAC, DST_MAC, SRC_IP_IPV4, DST_IP_IPV4, SRC_PORT, DNS_ID, DOMAIN_NAME_REG,
-	    strlen(DOMAIN_NAME_REG), DnsQType::T_A);
+	    strlen(DOMAIN_NAME_REG), DnsQType::A);
 
 	size_t ref_pkt_size = ConstructExamplePacketIpv4(ref_pkt->get());
 
@@ -214,7 +214,7 @@ TEST(DnsPacketConstructorTest, Ipv6Packet) {
 
 	size_t test_pkt_size = DNSPacketConstructor::ConstructIpv6DNSPacket(test_pkt->get(),
 	    SRC_MAC, DST_MAC, {{SRC_IP_IPV6}}, {{DST_IP_IPV6}}, SRC_PORT, DNS_ID, DOMAIN_NAME_REG,
-	    strlen(DOMAIN_NAME_REG), DnsQType::T_A);
+	    strlen(DOMAIN_NAME_REG), DnsQType::A);
 
 	size_t ref_pkt_size = ConstructExamplePacketIpv6(ref_pkt->get());
 

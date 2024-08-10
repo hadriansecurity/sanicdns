@@ -377,24 +377,24 @@ TEST(NetworkTypesTest, TestEtherAddr) {
 }
 
 TEST(ParseDNSReturnCodesTest, TestGood) {
-	auto out = ParseDNSReturnCodes("   R_NOERROR,R_SERVFAIL  ,R_BADKEY  ");
+	auto out = ParseDNSReturnCodes("   NOERROR,SERVFAIL  ,BADKEY  ");
 
 	EXPECT_TRUE(out.has_value());
 
 	auto expected_res = std::vector<DnsRCode>{
-	    DnsRCode::R_NOERROR,
-	    DnsRCode::R_SERVFAIL,
-	    DnsRCode::R_BADKEY,
+	    DnsRCode::NOERROR,
+	    DnsRCode::SERVFAIL,
+	    DnsRCode::BADKEY,
 	};
 	EXPECT_EQ(out, expected_res);
 }
 
 TEST(ParseDNSReturnCodesTest, TestBad) {
-	auto out = ParseDNSReturnCodes("R_NOERROR,R_SERVFAIL,R_BADKEYy");
+	auto out = ParseDNSReturnCodes("NOERROR,SERVFAIL,BADKEYy");
 
 	EXPECT_FALSE(out.has_value());
 
-	EXPECT_EQ(out.error(), std::string("Cannot read DNS return code R_BADKEYy"));
+	EXPECT_EQ(out.error(), std::string("Cannot read DNS return code BADKEYy"));
 }
 
 TEST(ParseDNSReturnCodesTest, TestEmpty) {

@@ -238,14 +238,14 @@ TEST(DnsPacketParserTest, A_record) {
 
 	    .ip_type = PacketIpType::Ipv4,
 	    .qname = "google.com.",
-	    .q_type = DnsQType::T_A,
-	    .error_code = DnsRCode::R_NOERROR,
+	    .q_type = DnsQType::A,
+	    .error_code = DnsRCode::NOERROR,
 	    .id = 0x2213,
 	    .dst_port = 64435,
 	    .src_ip = "192.168.1.1",
 	    .dst_ip = "192.168.1.177",
 
-	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::T_A,
+	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::A,
 		.ttl = 8,
 		.name = "google.com.",
 		.a_record = {"142.250.179.142"}}},
@@ -254,7 +254,7 @@ TEST(DnsPacketParserTest, A_record) {
 
 		},
 	    .additional_ref_records = {
-		ReferenceRecord{.q_type = DnsQType::T_OPT, .ttl = 0, .name = ""}}};
+		ReferenceRecord{.q_type = DnsQType::OPT, .ttl = 0, .name = ""}}};
 
 	CheckPacket(test_packet);
 }
@@ -273,18 +273,18 @@ TEST(DnsPacketParserTest, CNAME_record) {
 
 	    .ip_type = PacketIpType::Ipv4,
 	    .qname = "test.etv.tudelft.nl.",
-	    .q_type = DnsQType::T_A,
-	    .error_code = DnsRCode::R_NOERROR,
+	    .q_type = DnsQType::A,
+	    .error_code = DnsRCode::NOERROR,
 	    .id = 0x6ED5,
 	    .dst_port = 51878,
 	    .src_ip = "192.168.1.1",
 	    .dst_ip = "192.168.1.177",
 
-	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::T_CNAME,
+	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::CNAME,
 				       .ttl = 572,
 				       .name = "test.etv.tudelft.nl.",
 				       .cname_record = {"etvserv.etv.tudelft.nl."}},
-		ReferenceRecord{.q_type = DnsQType::T_A,
+		ReferenceRecord{.q_type = DnsQType::A,
 		    .ttl = 572,
 		    .name = "etvserv.etv.tudelft.nl.",
 		    .a_record = {"131.180.125.86"}}},
@@ -293,7 +293,7 @@ TEST(DnsPacketParserTest, CNAME_record) {
 
 		},
 	    .additional_ref_records = {
-		ReferenceRecord{.q_type = DnsQType::T_OPT, .ttl = 0, .name = ""}}};
+		ReferenceRecord{.q_type = DnsQType::OPT, .ttl = 0, .name = ""}}};
 
 	CheckPacket(test_packet);
 }
@@ -327,14 +327,14 @@ TEST(DnsPacketParserTest, SOA_AAAA_record) {
 
 	    .ip_type = PacketIpType::Ipv4,
 	    .qname = "google.com.",
-	    .q_type = DnsQType::T_SOA,
-	    .error_code = DnsRCode::R_NOERROR,
+	    .q_type = DnsQType::SOA,
+	    .error_code = DnsRCode::NOERROR,
 	    .id = 0xA688,
 	    .dst_port = 63590,
 	    .src_ip = "192.168.1.1",
 	    .dst_ip = "192.168.1.177",
 
-	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::T_SOA,
+	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::SOA,
 		.ttl = 1,
 		.name = "google.com.",
 		.soa_record = {.m_name = "ns1.google.com.",
@@ -344,55 +344,55 @@ TEST(DnsPacketParserTest, SOA_AAAA_record) {
 		    .retry = 900,
 		    .expire = 1800,
 		    .minimum = 60}}},
-	    .auth_ref_records = {ReferenceRecord{.q_type = DnsQType::T_NS,
+	    .auth_ref_records = {ReferenceRecord{.q_type = DnsQType::NS,
 				     .ttl = 10500,
 				     .name = "google.com.",
 				     .ns_record = {"ns4.google.com."}},
-		ReferenceRecord{.q_type = DnsQType::T_NS,
+		ReferenceRecord{.q_type = DnsQType::NS,
 		    .ttl = 10500,
 		    .name = "google.com.",
 		    .ns_record = {"ns2.google.com."}},
-		ReferenceRecord{.q_type = DnsQType::T_NS,
+		ReferenceRecord{.q_type = DnsQType::NS,
 		    .ttl = 10500,
 		    .name = "google.com.",
 		    .ns_record = {"ns3.google.com."}},
-		ReferenceRecord{.q_type = DnsQType::T_NS,
+		ReferenceRecord{.q_type = DnsQType::NS,
 		    .ttl = 10500,
 		    .name = "google.com.",
 		    .ns_record = {"ns1.google.com."}}},
-	    .additional_ref_records = {ReferenceRecord{.q_type = DnsQType::T_A,
+	    .additional_ref_records = {ReferenceRecord{.q_type = DnsQType::A,
 					   .ttl = 338791,
 					   .name = "ns1.google.com.",
 					   .a_record = {"216.239.32.10"}},
-		ReferenceRecord{.q_type = DnsQType::T_AAAA,
+		ReferenceRecord{.q_type = DnsQType::AAAA,
 		    .ttl = 344236,
 		    .name = "ns1.google.com.",
 		    .aaaa_record = {"2001:4860:4802:32::a"}},
-		ReferenceRecord{.q_type = DnsQType::T_A,
+		ReferenceRecord{.q_type = DnsQType::A,
 		    .ttl = 344236,
 		    .name = "ns2.google.com.",
 		    .a_record = {"216.239.34.10"}},
-		ReferenceRecord{.q_type = DnsQType::T_AAAA,
+		ReferenceRecord{.q_type = DnsQType::AAAA,
 		    .ttl = 339945,
 		    .name = "ns2.google.com.",
 		    .aaaa_record = {"2001:4860:4802:34::a"}},
-		ReferenceRecord{.q_type = DnsQType::T_A,
+		ReferenceRecord{.q_type = DnsQType::A,
 		    .ttl = 344850,
 		    .name = "ns4.google.com.",
 		    .a_record = {"216.239.38.10"}},
-		ReferenceRecord{.q_type = DnsQType::T_AAAA,
+		ReferenceRecord{.q_type = DnsQType::AAAA,
 		    .ttl = 343592,
 		    .name = "ns4.google.com.",
 		    .aaaa_record = {"2001:4860:4802:38::a"}},
-		ReferenceRecord{.q_type = DnsQType::T_A,
+		ReferenceRecord{.q_type = DnsQType::A,
 		    .ttl = 339264,
 		    .name = "ns3.google.com.",
 		    .a_record = {"216.239.36.10"}},
-		ReferenceRecord{.q_type = DnsQType::T_AAAA,
+		ReferenceRecord{.q_type = DnsQType::AAAA,
 		    .ttl = 343592,
 		    .name = "ns3.google.com.",
 		    .aaaa_record = {"2001:4860:4802:36::a"}},
-		ReferenceRecord{.q_type = DnsQType::T_OPT, .ttl = 0, .name = ""}}};
+		ReferenceRecord{.q_type = DnsQType::OPT, .ttl = 0, .name = ""}}};
 
 	CheckPacket(test_packet);
 }
@@ -456,60 +456,60 @@ TEST(DnsPacketParserTest, TXT_record) {
 
 	    .ip_type = PacketIpType::Ipv4,
 	    .qname = "google.com.",
-	    .q_type = DnsQType::T_TXT,
-	    .error_code = DnsRCode::R_NOERROR,
+	    .q_type = DnsQType::TXT,
+	    .error_code = DnsRCode::NOERROR,
 	    .id = 0x86EF,
 	    .dst_port = 54516,
 	    .src_ip = "192.168.1.1",
 	    .dst_ip = "192.168.1.177",
 
-	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::T_TXT,
+	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::TXT,
 				       .ttl = 3577,
 				       .name = "google.com.",
 				       .txt_record = {"globalsign-smime-dv=CDYX+XFHUw2wml6/"
 						      "Gb8+59BsH31KzUr6c1l2BPvqKX8="}},
-		ReferenceRecord{.q_type = DnsQType::T_TXT,
+		ReferenceRecord{.q_type = DnsQType::TXT,
 		    .ttl = 3577,
 		    .name = "google.com.",
 		    .txt_record = {"apple-domain-verification=30afIBcvSuDV2PLX"}},
-		ReferenceRecord{.q_type = DnsQType::T_TXT,
+		ReferenceRecord{.q_type = DnsQType::TXT,
 		    .ttl = 3577,
 		    .name = "google.com.",
 		    .txt_record = {"facebook-domain-verification=22rm551cu4k0ab0bxsw536tlds4h95"}},
-		ReferenceRecord{.q_type = DnsQType::T_TXT,
+		ReferenceRecord{.q_type = DnsQType::TXT,
 		    .ttl = 3577,
 		    .name = "google.com.",
 		    .txt_record = {"docusign=1b0a6754-49b1-4db5-8540-d2c12664b289"}},
-		ReferenceRecord{.q_type = DnsQType::T_TXT,
+		ReferenceRecord{.q_type = DnsQType::TXT,
 		    .ttl = 3577,
 		    .name = "google.com.",
 		    .txt_record =
 			{"google-site-verification=wD8N7i1JTNTkezJ49swvWW48f8_9xveREV4oB-0Hf5o"}},
-		ReferenceRecord{.q_type = DnsQType::T_TXT,
+		ReferenceRecord{.q_type = DnsQType::TXT,
 		    .ttl = 3577,
 		    .name = "google.com.",
 		    .txt_record =
 			{"google-site-verification=TV9-DBe4R80X4v0M4U_bd_J9cpOJM0nikft0jAgjmsQ"}},
-		ReferenceRecord{.q_type = DnsQType::T_TXT,
+		ReferenceRecord{.q_type = DnsQType::TXT,
 		    .ttl = 3577,
 		    .name = "google.com.",
 		    .txt_record =
 			{"webexdomainverification.8YX6G=6e6922db-e3e6-4a36-904e-a805c28087fa"}},
-		ReferenceRecord{.q_type = DnsQType::T_TXT,
+		ReferenceRecord{.q_type = DnsQType::TXT,
 		    .ttl = 3577,
 		    .name = "google.com.",
 		    .txt_record = {"docusign=05958488-4752-4ef2-95eb-aa7ba8a3bd0e"}},
-		ReferenceRecord{.q_type = DnsQType::T_TXT,
+		ReferenceRecord{.q_type = DnsQType::TXT,
 		    .ttl = 3577,
 		    .name = "google.com.",
 		    .txt_record = {"MS=E4A68B9AB2BB9670BCE15412F62916164C0B20BB"}},
-		ReferenceRecord{.q_type = DnsQType::T_TXT,
+		ReferenceRecord{.q_type = DnsQType::TXT,
 		    .ttl = 3577,
 		    .name = "google.com.",
 		    .txt_record =
 			{"atlassian-domain-verification="
 			 "5YjTmWmjI92ewqkx2oXmBaD60Td9zWon9r6eakvHX6B77zzkFQto8PQ9QsKnbf4I"}},
-		ReferenceRecord{.q_type = DnsQType::T_TXT,
+		ReferenceRecord{.q_type = DnsQType::TXT,
 		    .ttl = 3577,
 		    .name = "google.com.",
 		    .txt_record = {"v=spf1 include:_spf.google.com ~all"}}},
@@ -518,7 +518,7 @@ TEST(DnsPacketParserTest, TXT_record) {
 
 		},
 	    .additional_ref_records = {
-		ReferenceRecord{.q_type = DnsQType::T_OPT, .ttl = 0, .name = ""}}};
+		ReferenceRecord{.q_type = DnsQType::OPT, .ttl = 0, .name = ""}}};
 
 	CheckPacket(test_packet);
 }
@@ -599,14 +599,14 @@ TEST(DnsPacketParserTest, LONG_TXT_record) {
 
 	    .ip_type = PacketIpType::Ipv4,
 	    .qname = "test.brunelvolgen.nl.",
-	    .q_type = DnsQType::T_TXT,
-	    .error_code = DnsRCode::R_NOERROR,
+	    .q_type = DnsQType::TXT,
+	    .error_code = DnsRCode::NOERROR,
 	    .id = 0x6c04,
 	    .dst_port = 59591,
 	    .src_ip = "1.1.1.1",
 	    .dst_ip = "192.168.68.105",
 
-	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::T_TXT,
+	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::TXT,
 		.ttl = 300,
 		.name = "test.brunelvolgen.nl.",
 		.txt_record =
@@ -629,7 +629,7 @@ TEST(DnsPacketParserTest, LONG_TXT_record) {
 
 		},
 	    .additional_ref_records = {
-		ReferenceRecord{.q_type = DnsQType::T_OPT, .ttl = 0, .name = ""}}};
+		ReferenceRecord{.q_type = DnsQType::OPT, .ttl = 0, .name = ""}}};
 
 	CheckPacket(test_packet);
 }
@@ -651,14 +651,14 @@ TEST(DnsPacketParserTest, MX_record) {
 
 	    .ip_type = PacketIpType::Ipv4,
 	    .qname = "google.com.",
-	    .q_type = DnsQType::T_MX,
-	    .error_code = DnsRCode::R_NOERROR,
+	    .q_type = DnsQType::MX,
+	    .error_code = DnsRCode::NOERROR,
 	    .id = 0x8DDE,
 	    .dst_port = 61960,
 	    .src_ip = "192.168.1.1",
 	    .dst_ip = "192.168.1.177",
 
-	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::T_MX,
+	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::MX,
 		.ttl = 267,
 		.name = "google.com.",
 		.mx_record = {.name = "smtp.google.com.", .preference = 10}}},
@@ -666,23 +666,23 @@ TEST(DnsPacketParserTest, MX_record) {
 		{
 
 		},
-	    .additional_ref_records = {ReferenceRecord{.q_type = DnsQType::T_A,
+	    .additional_ref_records = {ReferenceRecord{.q_type = DnsQType::A,
 					   .ttl = 300,
 					   .name = "smtp.google.com.",
 					   .a_record = {"142.250.102.26"}},
-		ReferenceRecord{.q_type = DnsQType::T_A,
+		ReferenceRecord{.q_type = DnsQType::A,
 		    .ttl = 300,
 		    .name = "smtp.google.com.",
 		    .a_record = {"142.250.102.27"}},
-		ReferenceRecord{.q_type = DnsQType::T_AAAA,
+		ReferenceRecord{.q_type = DnsQType::AAAA,
 		    .ttl = 300,
 		    .name = "smtp.google.com.",
 		    .aaaa_record = {"2a00:1450:4025:402::1a"}},
-		ReferenceRecord{.q_type = DnsQType::T_AAAA,
+		ReferenceRecord{.q_type = DnsQType::AAAA,
 		    .ttl = 300,
 		    .name = "smtp.google.com.",
 		    .aaaa_record = {"2a00:1450:4025:402::1b"}},
-		ReferenceRecord{.q_type = DnsQType::T_OPT, .ttl = 0, .name = ""}}};
+		ReferenceRecord{.q_type = DnsQType::OPT, .ttl = 0, .name = ""}}};
 
 	CheckPacket(test_packet);
 }
@@ -701,14 +701,14 @@ TEST(DnsPacketParserTest, PTR_record) {
 
 	    .ip_type = PacketIpType::Ipv4,
 	    .qname = "26.102.250.142.in-addr.arpa.",
-	    .q_type = DnsQType::T_PTR,
-	    .error_code = DnsRCode::R_NOERROR,
+	    .q_type = DnsQType::PTR,
+	    .error_code = DnsRCode::NOERROR,
 	    .id = 0x5586,
 	    .dst_port = 55399,
 	    .src_ip = "192.168.1.1",
 	    .dst_ip = "192.168.1.177",
 
-	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::T_PTR,
+	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::PTR,
 		.ttl = 2414,
 		.name = "26.102.250.142.in-addr.arpa.",
 		.ptr_record = {"rb-in-f26.1e100.net."}}},
@@ -717,7 +717,7 @@ TEST(DnsPacketParserTest, PTR_record) {
 
 		},
 	    .additional_ref_records = {
-		ReferenceRecord{.q_type = DnsQType::T_OPT, .ttl = 0, .name = ""}}};
+		ReferenceRecord{.q_type = DnsQType::OPT, .ttl = 0, .name = ""}}};
 
 	CheckPacket(test_packet);
 }
