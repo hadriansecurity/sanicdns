@@ -1,7 +1,9 @@
 #pragma once
 
+// Including \0 terminators
 #define DOMAIN_NAME_MAX_SIZE 256
 #define CHARACTER_STRING_MAX_SIZE 1800
+#define CAA_TAG_MAX_SIZE 16
 
 #include <stdint.h>
 
@@ -24,14 +26,15 @@ enum class DnsQType {
 	TXT = 16,   // Txt record
 	AAAA = 28,  // Ipv6 address
 	DNAME = 39, // Delegation name record
-	OPT = 41    // Edns opt record
+	OPT = 41,    // Edns opt record
+    CAA = 257,  // Certificate Authority Authorization
 };
 
 template <>
 struct glz::meta<DnsQType> {
 	using enum DnsQType;
 	static constexpr auto value =
-	    enumerate(A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, DNAME, OPT);
+	    enumerate(A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, DNAME, CAA, OPT);
 };
 
 /**
@@ -287,6 +290,7 @@ struct [[gnu::packed]] QuestionInfo {
 
 using DnsName = FixedName<DOMAIN_NAME_MAX_SIZE>;
 using TxtString = FixedName<CHARACTER_STRING_MAX_SIZE>;
+using CAATag = FixedName<CAA_TAG_MAX_SIZE>;
 
 /**
  * @brief DNS header structure

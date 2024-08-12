@@ -270,6 +270,9 @@ void HandleParsedPacket(WorkerContext &ctx, WorkerParams &param, const DNSPacket
 			return;
 	}
 
+    fmt::print("{:02x}\n", fmt::join(reinterpret_cast<unsigned char *>(raw_pkt.data().padding.data()),
+                    reinterpret_cast<unsigned char *>(raw_pkt.data().padding.data() + raw_pkt.data_len), ""));
+
 	if (!param.output_raw) {
 		std::string out = glz::write_json(pkt);
 
@@ -462,9 +465,6 @@ int Worker(std::stop_token stop_token, uint16_t worker_id, WorkerParams param) {
 		//  	char* data = rte_pktmbuf_mtod(&packet, char*);
 		//  	rte_memdump(stdout, "PACKET", data, packet.data_len);
 		// }
-
-		// if (prepared_packet_buf.size() > 1)
-		// 	std::ignore = prepared_packet_buf.pop();
 
 		auto [num_sent, unsent_packets] =
 		    param.rxtx_if.SendPackets(ctx.queue_id, std::move(prepared_packet_buf));

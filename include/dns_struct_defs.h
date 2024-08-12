@@ -91,10 +91,16 @@ struct SOARdata {
 	} interval_settings;
 };
 
+struct CAARdata {
+    uint8_t flags;
+    CAATag tag;
+    TxtString value;
+};
+
 struct OPTRdata { };
 
 using Rdata = std::variant<ARdata, AAAARdata, NSRdata, MXRdata, CNAMERdata, DNAMERdata, PTRRdata,
-    TXTRdata, SOARdata, OPTRdata, std::monostate>;
+    TXTRdata, SOARdata, CAARdata, OPTRdata, std::monostate>;
 
 struct ResourceRecord {
 	DnsName name;

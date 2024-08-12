@@ -16,6 +16,7 @@
 #include <exception>
 
 #include "dns_format.h"
+#include "dns_struct_defs.h"
 #include "dpdk_wrappers.h"
 #include "network_types.h"
 #include "spdlog/fmt/bundled/core.h"
@@ -133,7 +134,7 @@ tl::expected<DnsName, DNSParseError> ReadFromDNSNameFormat(std::span<const std::
 			name_parsed.buf[name_parsed.len] = static_cast<uint16_t>(*(reader));
 			if (++reader >= bytes.end()) [[unlikely]]
 				return tl::unexpected(DNSParseError::OutOfBounds);
-			if (unlikely(++name_parsed.len >= DOMAIN_NAME_MAX_SIZE))
+			if (++name_parsed.len >= DOMAIN_NAME_MAX_SIZE) [[unlikely]]
 				return tl::unexpected(DNSParseError::NameTooLong);
 
 			// Increment count if we haven't jumped yet
@@ -157,6 +158,27 @@ tl::expected<DnsName, DNSParseError> ReadFromDNSNameFormat(std::span<const std::
 	return name_parsed;
 }
 
+template<size_t N>
+tl::expected<FixedName<N>, DNSParseError> ParseFixedName(std::span<const std::byte> bytes,
+    std::span<const std::byte>::iterator &reader, uint16_t length) {
+    FixedName<N> result;
+
+    // Tag field name length does not take \0 terminator into account
+    if (length >= N) [[unlikely]]
+        return tl::unexpected(DNSParseError::NameTooLong);
+    if (reader + length > bytes.end()) [[unlikely]]
+        return tl::unexpected(DNSParseError::OutOfBounds);
+
+    // Copy tag into r_data
+    std::copy(reader, reader + length,
+        reinterpret_cast<std::byte *>(result.buf.begin()));
+    result.buf[length] = '\0';
+    result.len = length;
+    reader += length;
+
+    return result;
+}
+
 tl::expected<ResourceRecord, DNSParseError> ParseResourceRecord(std::span<const std::byte> bytes,
     std::span<const std::byte>::iterator &reader) {
 	ResourceRecord parsed_record;
@@ -165,22 +187,31 @@ tl::expected<ResourceRecord, DNSParseError> ParseResourceRecord(std::span<const 
 	const RData *response = UNWRAP_OR_RETURN(AdvanceReader<RData>(bytes, reader));
 	parsed_record.q_type = static_cast<DnsQType>(rte_be_to_cpu_16(response->type));
 	parsed_record.ttl = rte_be_to_cpu_32(response->ttl);
+    
+    auto rdata_bytes = std::span(reader, rte_be_to_cpu_16(response->data_len));
+
+    // Make sure that the rdata bytes area doesn't go outside the packet byte area
+    if (rdata_bytes.end() > bytes.end()) [[unlikely]]
+        return tl::unexpected(DNSParseError::OutOfBounds);
+
 	auto begin = reader;
 	switch (parsed_record.q_type) {
 		case DnsQType::A: {
 			ARdata r_data;
-			r_data.ipv4_addr = *UNWRAP_OR_RETURN(AdvanceReader<InAddr>(bytes, reader));
+			r_data.ipv4_addr = *UNWRAP_OR_RETURN(AdvanceReader<InAddr>(rdata_bytes, reader));
 			parsed_record.r_data = r_data;
 			break;
 		}
 		case DnsQType::AAAA: {
 			AAAARdata r_data;
-			r_data.ipv6_addr = *UNWRAP_OR_RETURN(AdvanceReader<In6Addr>(bytes, reader));
+			r_data.ipv6_addr = *UNWRAP_OR_RETURN(AdvanceReader<In6Addr>(rdata_bytes, reader));
 			parsed_record.r_data = r_data;
 			break;
 		}
 		case DnsQType::NS: {
 			NSRdata r_data;
+            // Always pass in the full DNS packet as valid area for the ReadFromDNSNameFormat
+            // since the reader might jump
 			r_data.nameserver = UNWRAP_OR_RETURN(ReadFromDNSNameFormat(bytes, reader));
 			parsed_record.r_data = r_data;
 			break;
@@ -188,7 +219,7 @@ tl::expected<ResourceRecord, DNSParseError> ParseResourceRecord(std::span<const 
 		case DnsQType::MX: {
 			MXRdata r_data;
 			r_data.preference = rte_be_to_cpu_16(
-			    *UNWRAP_OR_RETURN(AdvanceReader<uint16_t>(bytes, reader)));
+			    *UNWRAP_OR_RETURN(AdvanceReader<uint16_t>(rdata_bytes, reader)));
 			r_data.mailserver = UNWRAP_OR_RETURN(ReadFromDNSNameFormat(bytes, reader));
 			parsed_record.r_data = r_data;
 			break;
@@ -215,18 +246,13 @@ tl::expected<ResourceRecord, DNSParseError> ParseResourceRecord(std::span<const 
 			TXTRdata r_data;
 			r_data.txt.len = 0;
 
-			auto txt_bytes = std::span(reader, rte_be_to_cpu_16(response->data_len));
 			auto txt_writer = r_data.txt.buf.begin();
 
-			// Make sure that the txt bytes area doesn't go outside the packet byte area
-			if (txt_bytes.end() > bytes.end())
-				return tl::unexpected(DNSParseError::OutOfBounds);
-
-			while (reader < txt_bytes.end()) {
+			while (reader < rdata_bytes.end()) {
 				uint8_t next_string_size =
-				    *UNWRAP_OR_RETURN(AdvanceReader<uint8_t>(txt_bytes, reader));
+				    *UNWRAP_OR_RETURN(AdvanceReader<uint8_t>(rdata_bytes, reader));
 
-				if (reader + next_string_size > bytes.end()) [[unlikely]]
+				if (reader + next_string_size > rdata_bytes.end()) [[unlikely]]
 					return tl::unexpected(DNSParseError::OutOfBounds);
 
 				// Also take \0 terminator into account
@@ -268,24 +294,42 @@ tl::expected<ResourceRecord, DNSParseError> ParseResourceRecord(std::span<const 
 			parsed_record.r_data = r_data;
 			break;
 		}
-		case DnsQType::OPT: {
-			if (reader + rte_be_to_cpu_16(response->data_len) > bytes.end())
-				return tl::unexpected(DNSParseError::OutOfBounds);
+        case DnsQType::CAA: {
+            CAARdata r_data;
+            r_data.flags =
+                *UNWRAP_OR_RETURN(AdvanceReader<uint8_t>(rdata_bytes, reader));
 
+            uint8_t tag_length =
+                *UNWRAP_OR_RETURN(AdvanceReader<uint8_t>(rdata_bytes, reader));
+
+            r_data.tag = UNWRAP_OR_RETURN(
+                ParseFixedName<CAA_TAG_MAX_SIZE>(rdata_bytes, reader, tag_length));
+
+            uint16_t value_len = rdata_bytes.end() - reader; 
+
+            // Max length of the value is not specified in the RFC,
+            // character string should be sufficient
+            r_data.value = UNWRAP_OR_RETURN(
+                ParseFixedName<CHARACTER_STRING_MAX_SIZE>(rdata_bytes, reader, value_len)
+            );
+
+            parsed_record.r_data = r_data;
+            break;
+        }
+		case DnsQType::OPT: {
 			reader += rte_be_to_cpu_16(response->data_len);
 
 			parsed_record.r_data = OPTRdata{};
 			break;
 		}
 		default:
-			if (reader + rte_be_to_cpu_16(response->data_len) > bytes.end())
-				return tl::unexpected(DNSParseError::OutOfBounds);
-
 			reader += rte_be_to_cpu_16(response->data_len);
 			parsed_record.r_data = std::monostate();
 			break;
 	}
 
+    // Check that the actual read bytes are equal to the number of bytes indicated in
+    // the RData length section
 	if (reader != begin + rte_be_to_cpu_16(response->data_len)) [[unlikely]]
 		return tl::unexpected(DNSParseError::MalformedPacket);
 
