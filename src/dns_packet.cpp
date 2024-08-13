@@ -77,10 +77,10 @@ inline tl::expected<const T *, DNSParseError> AdvanceReader(std::span<const std:
 	return ptr;
 }
 
-bool contains_unprintable_chars(std::string_view sv) {
+bool contains_unprintable_chars_or_space(std::string_view sv) {
 	bool result = false;
 	for (const auto &c : sv) {
-		result |= c < ' ' || c > '~';
+		result |= c < '!' || c > '~';
 	}
 
 	return result;
@@ -160,7 +160,7 @@ tl::expected<DnsName, DNSParseError> ReadFromDNSNameFormat(std::span<const std::
 	// Add NULL terminator
 	name_parsed.buf[name_parsed.len] = '\0';
 
-	if (contains_unprintable_chars(std::string_view(name_parsed))) [[unlikely]]
+	if (contains_unprintable_chars_or_space(std::string_view(name_parsed))) [[unlikely]]
 		return tl::unexpected(DNSParseError::InvalidChar);
 
 	// Add one to count if jumped to account for 2 byte offset field instead of 1 byte NULL
@@ -320,7 +320,7 @@ tl::expected<ResourceRecord, DNSParseError> ParseResourceRecord(std::span<const 
 			r_data.tag = UNWRAP_OR_RETURN(
 			    ParseFixedName<CAA_TAG_MAX_SIZE>(rdata_bytes, reader, tag_length));
 
-			if (contains_unprintable_chars(std::string_view(r_data.tag))) [[unlikely]]
+			if (contains_unprintable_chars_or_space(std::string_view(r_data.tag))) [[unlikely]]
 				return tl::unexpected(DNSParseError::InvalidChar);
 
 			uint16_t value_len = rdata_bytes.end() - reader;
