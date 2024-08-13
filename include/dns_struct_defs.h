@@ -32,6 +32,7 @@ enum class DNSParseError {
 	SrcPortErr,
 	MalformedPacket,
 	TxtTooLong,
+    InvalidChar,
 };
 
 // spdlog formatting for DNSParseError

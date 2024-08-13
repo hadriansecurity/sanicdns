@@ -9,6 +9,7 @@
 #include "dns_format.h"
 #include "dns_packet_constructor.h"
 #include "dns_struct_defs.h"
+#include "encode_dns_char_string.h"
 
 /**
  * Definitions for resource records
@@ -30,6 +31,13 @@ struct glz::meta<NSRdata> {
 };
 
 template <>
+struct glz::meta<MXRdata> {
+    static constexpr auto value = [](const auto &self) -> auto {
+        return fmt::format("{} {}", self.preference, self.mailserver);
+    };
+};
+
+template <>
 struct glz::meta<CNAMERdata> {
 	static constexpr auto value{&CNAMERdata::cname};
 };
@@ -46,7 +54,24 @@ struct glz::meta<PTRRdata> {
 
 template <>
 struct glz::meta<struct TXTRdata> {
-	static constexpr auto value{&TXTRdata::txt};
+	static constexpr auto value = [](const auto &self) -> auto {
+        return encode_dns_char_string(self.txt);
+    };
+};
+
+template <>
+struct glz::meta<SOARdata> {
+    static constexpr auto value = [](const auto &self) -> auto {
+        return fmt::format("{} {} {} {} {} {} {}", self.m_name, self.r_name, self.interval_settings.serial, self.interval_settings.refresh, self.interval_settings.retry, self.interval_settings.expire, self.interval_settings.minimum);
+    };
+};
+
+template <>
+struct glz::meta<struct CAARdata> {
+    static constexpr auto value = [](const auto &self) -> auto {
+        auto value_encoded = encode_dns_char_string(self.value, true);
+        return fmt::format("{} {} {}", self.flags, self.tag, value_encoded);
+	};
 };
 
 template <>
@@ -62,7 +87,7 @@ struct glz::meta<ResourceRecord> {
 
 template <>
 struct glz::meta<in_addr> {
-	static constexpr auto value = [](auto &self) -> auto {
+	static constexpr auto value = [](const auto &self) -> auto {
 		FixedName<INET_ADDRSTRLEN> val;
 
 		inet_ntop(AF_INET, &self, val.buf.data(), INET_ADDRSTRLEN);
@@ -73,7 +98,7 @@ struct glz::meta<in_addr> {
 
 template <>
 struct glz::meta<in6_addr> {
-	static constexpr auto value = [](auto &self) -> auto {
+	static constexpr auto value = [](const auto &self) -> auto {
 		FixedName<INET6_ADDRSTRLEN> val;
 
 		inet_ntop(AF_INET6, &self, val.buf.data(), INET6_ADDRSTRLEN);

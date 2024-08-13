@@ -58,6 +58,8 @@ auto fmt::formatter<DNSParseError>::format(DNSParseError e, format_context &ctx)
 			break;
 		case DNSParseError::EtherHdrProtoErr:
 			error = "ethernet header error";
+		case DNSParseError::InvalidChar:
+			error = "invalid character detected in packet";
 			break;
 	}
 	return formatter<string_view>::format(error, ctx);
@@ -73,6 +75,15 @@ inline tl::expected<const T *, DNSParseError> AdvanceReader(std::span<const std:
 	auto ptr = reinterpret_cast<const T *>(reader.base());
 	reader += sizeof(T);
 	return ptr;
+}
+
+bool contains_unprintable_chars(std::string_view sv) {
+	bool result = false;
+	for (const auto &c : sv) {
+		result |= c < ' ' || c > '~';
+	}
+
+	return result;
 }
 
 tl::expected<DnsName, DNSParseError> ReadFromDNSNameFormat(std::span<const std::byte> bytes,
@@ -148,6 +159,9 @@ tl::expected<DnsName, DNSParseError> ReadFromDNSNameFormat(std::span<const std::
 
 	// Add NULL terminator
 	name_parsed.buf[name_parsed.len] = '\0';
+
+	if (contains_unprintable_chars(std::string_view(name_parsed))) [[unlikely]]
+		return tl::unexpected(DNSParseError::InvalidChar);
 
 	// Add one to count if jumped to account for 2 byte offset field instead of 1 byte NULL
 	// terminator
@@ -305,6 +319,9 @@ tl::expected<ResourceRecord, DNSParseError> ParseResourceRecord(std::span<const 
 
 			r_data.tag = UNWRAP_OR_RETURN(
 			    ParseFixedName<CAA_TAG_MAX_SIZE>(rdata_bytes, reader, tag_length));
+
+			if (contains_unprintable_chars(std::string_view(r_data.tag))) [[unlikely]]
+				return tl::unexpected(DNSParseError::InvalidChar);
 
 			uint16_t value_len = rdata_bytes.end() - reader;
 
