@@ -220,7 +220,7 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 	auto& q_type = parser["q-type"]
 	                   .abbreviation('q')
 	                   .description("Question type\n (A, NS, CNAME, DNAME, SOA, "
-					"PTR, MX, TXT, AAAA, OPT)")
+					"PTR, MX, TXT, AAAA, CAA, OPT)")
 	                   .type(po::string)
 	                   .fallback("A");
 
@@ -362,7 +362,7 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 		std::optional res = GetQTypeFromString(q_type.get().string);
 		if (!res) {
 			fmt::print("{} invalid question type {}, choose from A, NS, CNAME, "
-				   "DNAME, SOA, PTR, MX, TXT, AAAA, OPT\n",
+				   "DNAME, SOA, PTR, MX, TXT, AAAA, CAA, OPT\n",
 			    error_str, q_type.get().string);
 			return std::nullopt;
 		}

@@ -1,7 +1,9 @@
 #pragma once
 
+// Including \0 terminators
 #define DOMAIN_NAME_MAX_SIZE 256
 #define CHARACTER_STRING_MAX_SIZE 1800
+#define CAA_TAG_MAX_SIZE 16
 
 #include <stdint.h>
 
@@ -24,14 +26,15 @@ enum class DnsQType {
 	TXT = 16,   // Txt record
 	AAAA = 28,  // Ipv6 address
 	DNAME = 39, // Delegation name record
-	OPT = 41    // Edns opt record
+	OPT = 41,   // Edns opt record
+	CAA = 257,  // Certificate Authority Authorization
 };
 
 template <>
 struct glz::meta<DnsQType> {
 	using enum DnsQType;
 	static constexpr auto value =
-	    enumerate(A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, DNAME, OPT);
+	    enumerate(A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, DNAME, CAA, OPT);
 };
 
 /**
@@ -44,38 +47,28 @@ inline const char* GetQTypeMessage(const DnsQType q_type) {
 	switch (q_type) {
 		case DnsQType::A:
 			return "A";
-			break;
 		case DnsQType::NS:
 			return "NS";
-			break;
 		case DnsQType::CNAME:
 			return "CNAME";
-			break;
 		case DnsQType::DNAME:
 			return "DNAME";
-			break;
 		case DnsQType::SOA:
 			return "SOA";
-			break;
 		case DnsQType::PTR:
 			return "PTR";
-			break;
 		case DnsQType::MX:
 			return "MX";
-			break;
 		case DnsQType::TXT:
 			return "TXT";
-			break;
 		case DnsQType::AAAA:
 			return "AAAA";
-			break;
+		case DnsQType::CAA:
+			return "CAA";
 		case DnsQType::OPT:
 			return "OPT";
-			break;
-
 		default:
 			return "unknown";
-			break;
 	}
 }
 
@@ -104,6 +97,8 @@ inline std::optional<DnsQType> GetQTypeFromString(std::string_view q_type) {
 		return DnsQType::TXT;
 	} else if (q_type == "AAAA") {
 		return DnsQType::AAAA;
+	} else if (q_type == "CAA") {
+		return DnsQType::CAA;
 	} else if (q_type == "OPT") {
 		return DnsQType::OPT;
 	}
@@ -140,10 +135,9 @@ enum class DnsRCode {
 template <>
 struct glz::meta<DnsRCode> {
 	using enum DnsRCode;
-	static constexpr auto value =
-	    enumerate(NOERROR, FORMERROR, SERVFAIL, NXDOMAIN, NOTIMP, REFUSED,
-		YXDOMAIN, XYRRSET, NXRRSET, NOTAUTH, NOTZONE, DSOTYPENI, BADVERS,
-		BADKEY, BADTIME, BADMODE, BADNAM, BADALG, BADTRUNC, BADCOOKIE);
+	static constexpr auto value = enumerate(NOERROR, FORMERROR, SERVFAIL, NXDOMAIN, NOTIMP,
+	    REFUSED, YXDOMAIN, XYRRSET, NXRRSET, NOTAUTH, NOTZONE, DSOTYPENI, BADVERS, BADKEY,
+	    BADTIME, BADMODE, BADNAM, BADALG, BADTRUNC, BADCOOKIE);
 };
 
 /**
@@ -287,6 +281,7 @@ struct [[gnu::packed]] QuestionInfo {
 
 using DnsName = FixedName<DOMAIN_NAME_MAX_SIZE>;
 using TxtString = FixedName<CHARACTER_STRING_MAX_SIZE>;
+using CAATag = FixedName<CAA_TAG_MAX_SIZE>;
 
 /**
  * @brief DNS header structure

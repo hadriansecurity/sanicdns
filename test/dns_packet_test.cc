@@ -77,6 +77,12 @@ struct ReferenceRecord {
 		uint32_t minimum;
 	} soa_record;
 
+	struct TypeCAA {
+		uint8_t flags;
+		std::string tag;
+		std::string value;
+	} caa_record;
+
 	struct TypeTxt {
 		std::string name;
 	} txt_record;
@@ -159,6 +165,11 @@ void CheckRecord(const ReferenceRecord& reference, const ResourceRecord& test_re
 			EXPECT_EQ(reference.soa_record.expire, r_data.interval_settings.expire);
 			EXPECT_EQ(reference.soa_record.minimum, r_data.interval_settings.minimum);
 		},
+		[&](CAARdata r_data) {
+			EXPECT_EQ(reference.caa_record.flags, r_data.flags);
+			CheckFixedName(reference.caa_record.tag, r_data.tag);
+			CheckFixedName(reference.caa_record.value, r_data.value);
+		},
 		[&]([[maybe_unused]] OPTRdata r_data) {}, [&](std::monostate) {}},
 	    test_record.r_data);
 }
@@ -198,7 +209,7 @@ auto ExtractPacket(const TestPacket& packet) {
 void CheckPacket(const TestPacket& packet) {
 	auto [mbuf_pool_out, parsed_packet] = ExtractPacket(packet);
 
-	EXPECT_EQ(parsed_packet.has_value(), true);
+	ASSERT_EQ(parsed_packet.has_value(), true);
 
 	EXPECT_EQ(parsed_packet->ip_data.dst_port, packet.dst_port);
 	EXPECT_EQ(parsed_packet->dns_id, packet.id);
@@ -683,6 +694,54 @@ TEST(DnsPacketParserTest, MX_record) {
 		    .name = "smtp.google.com.",
 		    .aaaa_record = {"2a00:1450:4025:402::1b"}},
 		ReferenceRecord{.q_type = DnsQType::OPT, .ttl = 0, .name = ""}}};
+
+	CheckPacket(test_packet);
+}
+
+TEST(DnsPacketParserTest, CAA_RECORD) {
+	auto test_packet = TestPacket{
+	    // Checks CAA record
+	    .raw = "\xbc\xd0\x74\x17\xbe\x44\x1a\xfa\xb7\x3a\x46\x64\x08\x00\x45\x00"
+		   "\x00\xaf\x66\x6f\x00\x00\x40\x11\xa7\xa0\xac\x14\x0a\x01\xac\x14"
+		   "\x0a\x05\x00\x35\xf9\xb4\x00\x9b\xb2\x33\x0f\x8a\x81\x80\x00\x01"
+		   "\x00\x03\x00\x00\x00\x01\x05\x61\x70\x70\x6c\x65\x03\x63\x6f\x6d"
+		   "\x00\x01\x01\x00\x01\xc0\x0c\x01\x01\x00\x01\x00\x00\x01\x70\x00"
+		   "\x23\x00\x05\x69\x6f\x64\x65\x66\x6d\x61\x69\x6c\x74\x6f\x3a\x63"
+		   "\x6f\x6e\x74\x61\x63\x74\x5f\x70\x6b\x69\x40\x61\x70\x70\x6c\x65"
+		   "\x2e\x63\x6f\x6d\xc0\x0c\x01\x01\x00\x01\x00\x00\x01\x70\x00\x12"
+		   "\x00\x05\x69\x73\x73\x75\x65\x65\x6e\x74\x72\x75\x73\x74\x2e\x6e"
+		   "\x65\x74\xc0\x0c\x01\x01\x00\x01\x00\x00\x01\x70\x00\x14\x00\x05"
+		   "\x69\x73\x73\x75\x65\x70\x6b\x69\x2e\x61\x70\x70\x6c\x65\x2e\x63"
+		   "\x6f\x6d\x00\x00\x29\x10\x00\x00\x00\x00\x00\x00\x00"s,
+
+	    .ip_type = PacketIpType::Ipv4,
+	    .qname = "apple.com.",
+	    .q_type = DnsQType::CAA,
+	    .error_code = DnsRCode::NOERROR,
+	    .id = 0x0f8a,
+	    .dst_port = 63924,
+	    .src_ip = "172.20.10.1",
+	    .dst_ip = "172.20.10.5",
+
+	    .answer_ref_records = {ReferenceRecord{.q_type = DnsQType::CAA,
+				       .ttl = 368,
+				       .name = "apple.com.",
+				       .caa_record = {.flags = 0,
+					   .tag = "iodef",
+					   .value = "mailto:contact_pki@apple.com"}},
+		ReferenceRecord{.q_type = DnsQType::CAA,
+		    .ttl = 368,
+		    .name = "apple.com.",
+		    .caa_record = {.flags = 0, .tag = "issue", .value = "entrust.net"}},
+		ReferenceRecord{.q_type = DnsQType::CAA,
+		    .ttl = 368,
+		    .name = "apple.com.",
+		    .caa_record = {.flags = 0, .tag = "issue", .value = "pki.apple.com"}}},
+	    .additional_ref_records =
+		{
+		    ReferenceRecord{.q_type = DnsQType::OPT, .ttl = 0, .name = ""},
+		},
+	};
 
 	CheckPacket(test_packet);
 }
