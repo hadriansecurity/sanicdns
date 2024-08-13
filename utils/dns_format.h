@@ -47,38 +47,28 @@ inline const char* GetQTypeMessage(const DnsQType q_type) {
 	switch (q_type) {
 		case DnsQType::A:
 			return "A";
-			break;
 		case DnsQType::NS:
 			return "NS";
-			break;
 		case DnsQType::CNAME:
 			return "CNAME";
-			break;
 		case DnsQType::DNAME:
 			return "DNAME";
-			break;
 		case DnsQType::SOA:
 			return "SOA";
-			break;
 		case DnsQType::PTR:
 			return "PTR";
-			break;
 		case DnsQType::MX:
 			return "MX";
-			break;
 		case DnsQType::TXT:
 			return "TXT";
-			break;
 		case DnsQType::AAAA:
 			return "AAAA";
-			break;
+        case DnsQType::CAA:
+            return "CAA";
 		case DnsQType::OPT:
 			return "OPT";
-			break;
-
 		default:
 			return "unknown";
-			break;
 	}
 }
 
@@ -107,6 +97,8 @@ inline std::optional<DnsQType> GetQTypeFromString(std::string_view q_type) {
 		return DnsQType::TXT;
 	} else if (q_type == "AAAA") {
 		return DnsQType::AAAA;
+    } else if (q_type == "CAA") {
+        return DnsQType::CAA;
 	} else if (q_type == "OPT") {
 		return DnsQType::OPT;
 	}

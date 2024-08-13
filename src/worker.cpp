@@ -270,8 +270,8 @@ void HandleParsedPacket(WorkerContext &ctx, WorkerParams &param, const DNSPacket
 			return;
 	}
 
-    fmt::print("{:02x}\n", fmt::join(reinterpret_cast<unsigned char *>(raw_pkt.data().padding.data()),
-                    reinterpret_cast<unsigned char *>(raw_pkt.data().padding.data() + raw_pkt.data_len), ""));
+    // fmt::print("{:02x}\n", fmt::join(reinterpret_cast<unsigned char *>(raw_pkt.data().padding.data()),
+    //                 reinterpret_cast<unsigned char *>(raw_pkt.data().padding.data() + raw_pkt.data_len), ""));
 
 	if (!param.output_raw) {
 		std::string out = glz::write_json(pkt);
