@@ -26,8 +26,8 @@ enum class DnsQType {
 	TXT = 16,   // Txt record
 	AAAA = 28,  // Ipv6 address
 	DNAME = 39, // Delegation name record
-	OPT = 41,    // Edns opt record
-    CAA = 257,  // Certificate Authority Authorization
+	OPT = 41,   // Edns opt record
+	CAA = 257,  // Certificate Authority Authorization
 };
 
 template <>
@@ -63,8 +63,8 @@ inline const char* GetQTypeMessage(const DnsQType q_type) {
 			return "TXT";
 		case DnsQType::AAAA:
 			return "AAAA";
-        case DnsQType::CAA:
-            return "CAA";
+		case DnsQType::CAA:
+			return "CAA";
 		case DnsQType::OPT:
 			return "OPT";
 		default:
@@ -97,8 +97,8 @@ inline std::optional<DnsQType> GetQTypeFromString(std::string_view q_type) {
 		return DnsQType::TXT;
 	} else if (q_type == "AAAA") {
 		return DnsQType::AAAA;
-    } else if (q_type == "CAA") {
-        return DnsQType::CAA;
+	} else if (q_type == "CAA") {
+		return DnsQType::CAA;
 	} else if (q_type == "OPT") {
 		return DnsQType::OPT;
 	}
@@ -135,10 +135,9 @@ enum class DnsRCode {
 template <>
 struct glz::meta<DnsRCode> {
 	using enum DnsRCode;
-	static constexpr auto value =
-	    enumerate(NOERROR, FORMERROR, SERVFAIL, NXDOMAIN, NOTIMP, REFUSED,
-		YXDOMAIN, XYRRSET, NXRRSET, NOTAUTH, NOTZONE, DSOTYPENI, BADVERS,
-		BADKEY, BADTIME, BADMODE, BADNAM, BADALG, BADTRUNC, BADCOOKIE);
+	static constexpr auto value = enumerate(NOERROR, FORMERROR, SERVFAIL, NXDOMAIN, NOTIMP,
+	    REFUSED, YXDOMAIN, XYRRSET, NXRRSET, NOTAUTH, NOTZONE, DSOTYPENI, BADVERS, BADKEY,
+	    BADTIME, BADMODE, BADNAM, BADALG, BADTRUNC, BADCOOKIE);
 };
 
 /**
