@@ -85,7 +85,7 @@ struct FixedName {
      * @return std::optional<FixedName> containing the concatenated result, or std::nullopt if the result exceeds the buffer size.
      */
     std::optional<FixedName> operator+(std::string_view other) const {
-	    if (len + other.size() + 1 > N) { // +1 for the null terminator
+	    if (len + other.size() >= N) { // >= N because we need space for null terminato
 		    return std::nullopt;
 	    }
 
@@ -96,6 +96,22 @@ struct FixedName {
 	    result.buf[result.len] = '\0'; // Ensure null-termination
 
 	    return result;
+    }
+
+    /**
+    * @brief Appends a string_view to the current FixedName.
+    * 
+    * @param other The string_view to append.
+    * @return bool True if the operation was successful, false otherwise.
+    */
+    bool operator+=(std::string_view other) {
+        if (len + other.size() >= N) { // >= N because we need space for null terminator
+            return false;
+        }
+        std::copy(other.begin(), other.end(), buf.begin() + len);
+        len += other.size();
+        buf[len] = '\0'; // Ensure null-termination
+        return true;
     }
 
     /**

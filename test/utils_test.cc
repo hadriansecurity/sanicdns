@@ -240,10 +240,9 @@ TYPED_TEST(FixedNameTests, FixedNameConcatenation) {
 
 	{
 		// Test concatenation within bounds
-		auto hello_opt = FixedNameType::init("Hello");
-		ASSERT_TRUE(hello_opt.has_value());
+		auto hello = FixedNameType("Hello");
 
-		auto combined_opt = *hello_opt + "World";
+		auto combined_opt = hello + "World";
 		if (ArraySize >= 11) { // "HelloWorld" + null terminator fits within 11 chars
 			ASSERT_TRUE(combined_opt.has_value());
 			EXPECT_EQ(combined_opt->len, 10);
@@ -264,6 +263,39 @@ TYPED_TEST(FixedNameTests, FixedNameConcatenation) {
 
 		auto overflow_too_full_opt = *combined_opt + "c";
 		ASSERT_FALSE(overflow_too_full_opt.has_value());
+	}
+}
+
+TYPED_TEST(FixedNameTests, FixedNameAppend) {
+	constexpr auto ArraySize = TestFixture::ArraySize;
+	using FixedNameType = FixedName<ArraySize>;
+
+	{
+		// Test append within bounds
+		auto hello = FixedNameType("Hello");
+
+		auto success = hello += "World";
+		if (ArraySize >= 11) { // "HelloWorld" + null terminator fits within 11 chars
+			ASSERT_TRUE(success);
+			EXPECT_EQ(hello.len, 10);
+			EXPECT_EQ(std::string_view(hello), "HelloWorld");
+		} else {
+			ASSERT_FALSE(success);
+		}
+	}
+	{
+		// Test append that exceeds buffer size by one character
+		std::string almost_full(ArraySize - 2,
+		    'a'); // leaving 1 space for 'b' and 1 for null terminator
+		auto almost_full_opt = FixedNameType::init(almost_full);
+
+		ASSERT_TRUE(almost_full_opt.has_value());
+
+		bool success = *almost_full_opt += "b";
+		ASSERT_TRUE(success);
+
+		success = *almost_full_opt += "c";
+		ASSERT_FALSE(success);
 	}
 }
 
