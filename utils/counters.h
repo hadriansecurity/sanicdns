@@ -33,6 +33,7 @@ struct alignas(64) PerCoreCounters {
 		sent_pkts = f(sent_pkts, other.sent_pkts);
 
 		retry = f(retry, other.retry);
+		max_retry = f(max_retry, other.max_retry);
 
 		rcvd_pkts = f(rcvd_pkts, other.rcvd_pkts);
 
