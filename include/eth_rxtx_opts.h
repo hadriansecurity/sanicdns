@@ -47,3 +47,5 @@ struct AF_XDP_OPTS {
 
 using NICType = EthRxTx<NIC_OPTS>;
 
+// template class EthRxTx<AF_XDP_OPTS>;
+// template class EthRxTx<I40E_OPTS>;
