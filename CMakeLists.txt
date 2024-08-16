@@ -69,6 +69,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 # Find DPDK
 find_package(dpdk REQUIRED)
 
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "14.0.0")
+	    add_compile_options(-Wno-dangling-reference)
+endif()
+
 # Force Colored Output
 if (${FORCE_COLORED_OUTPUT})
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
