@@ -320,7 +320,8 @@ tl::expected<ResourceRecord, DNSParseError> ParseResourceRecord(std::span<const 
 			r_data.tag = UNWRAP_OR_RETURN(
 			    ParseFixedName<CAA_TAG_MAX_SIZE>(rdata_bytes, reader, tag_length));
 
-			if (contains_unprintable_chars_or_space(std::string_view(r_data.tag))) [[unlikely]]
+			if (contains_unprintable_chars_or_space(std::string_view(r_data.tag)))
+			    [[unlikely]]
 				return tl::unexpected(DNSParseError::InvalidChar);
 
 			uint16_t value_len = rdata_bytes.end() - reader;

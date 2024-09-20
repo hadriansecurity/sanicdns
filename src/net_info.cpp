@@ -202,11 +202,12 @@ tl::expected<net_info::RouteInfo, std::string> net_info::get_route_info(
 
 	auto iface = UNWRAP_OR_RETURN(get_if_to_use(if_name, default_interface));
 
-	if (!routes_map.contains(iface))
-		return tl::unexpected(
-		    fmt::format("Cannot find routes for interface {}", default_interface->c_str()));
-
 	close(sock);
+
+	if (!routes_map.contains(iface)) {
+		spdlog::warn("Cannot get routes for {}, returning empty RouteInfo", iface);
+		return net_info::RouteInfo{.if_name = iface};
+	}
 
 	return routes_map[iface];
 }

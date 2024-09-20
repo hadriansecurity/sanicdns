@@ -131,7 +131,7 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 	auto& num_concurrent =
 	    parser["num-concurrent"]
 		.abbreviation('c')
-		.description("max number of concurrent DNS requests\n  (default: rate/5)")
+		.description("max number of concurrent DNS requests\n  (default: rate)")
 		.type(po::u32)
 		.fallback(200);
 
@@ -819,9 +819,9 @@ int main(int argc, char** argv) {
 
 	// auto rxtx_if2 = ({
 	// 	tl::expected res =
-	// 	    EthRxTx<I40E_OPTS>::init(eth_config2, "0000:2e:00.1", rxtx_pool.get());
+	// 	    EthRxTx<I40E_OPTS>::init(eth_config2, "0000:2e:00.0", rxtx_pool.get());
 	// 	if (!res) {
-	// 		spdlog::error("Failed to initialize NIC: {}", res.error());
+	// 		fmt::print("{} Failed to initialize NIC: {}", error_str, res.error());
 	// 		return -1;
 	// 	}
 	// 	std::move(*res);
@@ -833,6 +833,9 @@ int main(int argc, char** argv) {
 	// 	    uint64_t total_packets{};
 	// 	    while (!stp.stop_requested()) {
 	// 		    auto recvd = rxtx_if2.RcvPackets<RX_PKT_BURST>(0);
+	//             if(recvd.size())
+	//                 spdlog::info("{}", recvd.size());
+
 	// 		    for (auto& pkt : recvd) {
 	// 			    auto eth_hdr = &pkt.data<struct rte_ether_hdr>();
 	// 			    rte_ipv4_hdr* ipv4_hdr = (rte_ipv4_hdr*) (eth_hdr + 1);
@@ -849,7 +852,7 @@ int main(int argc, char** argv) {
 	// 			    udp_hdr->dst_port = src_port_old;
 
 	// 			    dns_hdr->qr = 1;
-	// 			    dns_hdr->rcode = (unsigned char) DnsRCode::R_NXDOMAIN;
+	// 			    dns_hdr->rcode = (unsigned char) DnsRCode::NXDOMAIN;
 
 	// 			    pkt.l2_len = sizeof(rte_ether_hdr);
 	// 			    pkt.l3_len = sizeof(rte_ipv4_hdr);
@@ -861,6 +864,8 @@ int main(int argc, char** argv) {
 	// 				.PreparePktCksums<DefaultPacket, L3Type::Ipv4, L4Type::UDP>(
 	// 				    pkt);
 	// 			    total_packets++;
+
+	//                 spdlog::info("a");
 	// 		    }
 
 	// 		    rxtx_if2.PreparePackets(0, recvd);
@@ -1050,6 +1055,7 @@ int main(int argc, char** argv) {
 	// std::cout << "\nRxTx if stats:\n\n";
 
 	rxtx_if.PrintStats();
+	// rxtx_if2.PrintStats();
 
 	std::cout << "\n\nRunning scanner took " << duration.count() << " ms\n";
 }

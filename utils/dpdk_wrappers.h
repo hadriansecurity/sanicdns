@@ -816,11 +816,11 @@ public:
 
 	template <size_t N>
 	RTEMbufArray<Elem, N, type> dequeue_burst(size_t num = N) {
-		std::array<typename RTEMbufArray<Elem, N, type>::pointer, N> ptrs;
-		auto ptr = reinterpret_cast<void **>(ptrs.data());
-		auto res = rte_ring_dequeue_burst(ptr_, ptr, num, nullptr);
+		std::array<typename RTEMbufArray<Elem, N, type>::pointer, N> objs;
+		auto objs_ptr = reinterpret_cast<void **>(objs.data());
+		auto res = rte_ring_dequeue_burst(ptr_, objs_ptr, num, nullptr);
 
-		return RTEMbufArray<Elem, N, type>{mempool_, std::span{ptrs.begin(), res}};
+		return RTEMbufArray<Elem, N, type>{mempool_, std::span{objs.begin(), res}};
 	}
 
 	/**
