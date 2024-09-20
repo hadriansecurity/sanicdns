@@ -233,7 +233,7 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 	}
 
 	if (version.was_set()) {
-		std::cout << fmt::format("sanicdns {}", SANICDNS_VERSION) << std::endl;
+		std::cout << fmt::format("sanicdns {}, built for NIC type: {}", SANICDNS_VERSION, NIC_NAME) << std::endl;
 		return std::nullopt;
 	}
 
