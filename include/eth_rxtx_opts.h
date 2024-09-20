@@ -41,8 +41,10 @@ struct AF_XDP_OPTS {
 
 #ifdef NIC_AF_XDP
 	using NIC_OPTS = AF_XDP_OPTS;
+	constexpr auto NIC_NAME = "AF_XDP";
 #elif NIC_I40E
 	using NIC_OPTS = I40E_OPTS;
+	constexpr auto NIC_NAME = "I40E";
 #endif
 
 using NICType = EthRxTx<NIC_OPTS>;
