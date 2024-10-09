@@ -103,6 +103,7 @@ struct UserConfig {
 	bool output_raw;
 	bool no_huge;
 	bool debug;
+	bool skip_queue_count_check;
 
 	DnsQType q_type;
 };
@@ -217,6 +218,9 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 
 	auto& debug = parser["debug"].description("Print debug information");
 
+	auto& skip_queue_count_check = parser["skip-queue-count-check"].description(
+	    "Skip check if worker count is equal to the number of workers");
+
 	auto& q_type = parser["q-type"]
 	                   .abbreviation('q')
 	                   .description("Question type\n (A, NS, CNAME, DNAME, SOA, "
@@ -233,7 +237,9 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 	}
 
 	if (version.was_set()) {
-		std::cout << fmt::format("sanicdns {}, built for NIC type: {}", SANICDNS_VERSION, NIC_NAME) << std::endl;
+		std::cout << fmt::format("sanicdns {}, built for NIC type: {}", SANICDNS_VERSION,
+				 NIC_NAME)
+			  << std::endl;
 		return std::nullopt;
 	}
 
@@ -357,6 +363,7 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 	config.output_raw = output_raw.was_set();
 	config.no_huge = no_huge.was_set();
 	config.debug = debug.was_set();
+	config.skip_queue_count_check = skip_queue_count_check.was_set();
 
 	config.q_type = ({
 		std::optional res = GetQTypeFromString(q_type.get().string);
@@ -591,7 +598,7 @@ int main(int argc, char** argv) {
 	const uint16_t num_workers = user_config.cores - 1;
 	const uint16_t total_queues = num_workers + (NIC_OPTS::queue_for_main_thread ? 1 : 0);
 
-	if constexpr (NIC_OPTS::make_af_xdp_socket) {
+	if (NIC_OPTS::make_af_xdp_socket && (!user_config.skip_queue_count_check)) {
 		auto dev_name = UNWRAP_OR_RETURN_VAL(
 		    FixedName<IFNAMSIZ>::init(ethernet_config.device_name), -1);
 		auto res = VerifyQueues(dev_name, user_config.cores, total_queues);
@@ -674,8 +681,9 @@ int main(int argc, char** argv) {
 		std::move(*res);
 	});
 
+	// Wait a bit for AF_XDP socket to initialise
 	if constexpr (NIC_OPTS::make_af_xdp_socket)
-		rte_delay_ms(3000);
+		rte_delay_ms(4000);
 
 	const uint32_t request_mempool_size = std::max(user_config.num_concurrent, 1023u);
 
