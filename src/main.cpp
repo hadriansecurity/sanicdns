@@ -1,3 +1,4 @@
+#include <curses.h>
 #include <expected_helpers.h>
 #include <fcntl.h>
 #include <ncurses.h>
@@ -103,6 +104,7 @@ struct UserConfig {
 	bool output_raw;
 	bool no_huge;
 	bool debug;
+	bool skip_queue_count_check;
 
 	DnsQType q_type;
 };
@@ -217,6 +219,9 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 
 	auto& debug = parser["debug"].description("Print debug information");
 
+	auto& skip_queue_count_check = parser["skip-queue-count-check"].description(
+	    "Skip check if worker count is equal to the number of workers");
+
 	auto& q_type = parser["q-type"]
 	                   .abbreviation('q')
 	                   .description("Question type\n (A, NS, CNAME, DNAME, SOA, "
@@ -233,7 +238,9 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 	}
 
 	if (version.was_set()) {
-		std::cout << fmt::format("sanicdns {}, built for NIC type: {}", SANICDNS_VERSION, NIC_NAME) << std::endl;
+		std::cout << fmt::format("sanicdns {}, built for NIC type: {}", SANICDNS_VERSION,
+				 NIC_NAME)
+			  << std::endl;
 		return std::nullopt;
 	}
 
@@ -357,6 +364,7 @@ std::optional<UserConfig> InitConfigFromArgs(int argc, char** argv) {
 	config.output_raw = output_raw.was_set();
 	config.no_huge = no_huge.was_set();
 	config.debug = debug.was_set();
+	config.skip_queue_count_check = skip_queue_count_check.was_set();
 
 	config.q_type = ({
 		std::optional res = GetQTypeFromString(q_type.get().string);
@@ -462,7 +470,11 @@ tl::expected<void, std::string> VerifyQueues(FixedName<IFNAMSIZ> dev_name, const
 	auto channel_count = net_info::get_channel_count(dev_name);
 	if (!channel_count.has_value()) {
 		return tl::unexpected(
-		    fmt::format("{}, channel_count error: {}\n", error_str, channel_count.error()));
+		    fmt::format("{}, channel_count error: {}\n An invalid argument or inappropriate ioctl "
+			    "for device error can indicate "
+			    "insufficient multiqueue support. In this case you can opt to disable the queue check "
+			    "using --skip-queue-count-check.",
+			    error_str, channel_count.error()));
 	}
 
 	uint32_t combined_channels = channel_count.value().combined_count;
@@ -591,7 +603,7 @@ int main(int argc, char** argv) {
 	const uint16_t num_workers = user_config.cores - 1;
 	const uint16_t total_queues = num_workers + (NIC_OPTS::queue_for_main_thread ? 1 : 0);
 
-	if constexpr (NIC_OPTS::make_af_xdp_socket) {
+	if (NIC_OPTS::make_af_xdp_socket && (!user_config.skip_queue_count_check)) {
 		auto dev_name = UNWRAP_OR_RETURN_VAL(
 		    FixedName<IFNAMSIZ>::init(ethernet_config.device_name), -1);
 		auto res = VerifyQueues(dev_name, user_config.cores, total_queues);
@@ -599,6 +611,11 @@ int main(int argc, char** argv) {
 			fmt::print("{} {}", error_str, res.error());
 			return -1;
 		}
+	} else if (user_config.skip_queue_count_check) {
+		spdlog::warn("Queue count check is disabled! This means sanicdns NOT verify if the amount of queues match the amount of workers. "
+				"In case you have more queues than workers, please use RSS to make sure redudant queues are unused like so:\n"
+				"sudo ethtool -X [interface] equal [num workers]. Not doing this WILL result in SEVERELY degraded performance!");
+		rte_delay_ms(2000);
 	}
 
 	auto dpdk_args = init_eal_args(user_config, ethernet_config);
@@ -674,8 +691,9 @@ int main(int argc, char** argv) {
 		std::move(*res);
 	});
 
+	// Wait a bit for AF_XDP socket to initialise
 	if constexpr (NIC_OPTS::make_af_xdp_socket)
-		rte_delay_ms(3000);
+		rte_delay_ms(4000);
 
 	const uint32_t request_mempool_size = std::max(user_config.num_concurrent, 1023u);
 

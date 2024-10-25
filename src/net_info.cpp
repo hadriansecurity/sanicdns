@@ -232,7 +232,7 @@ tl::expected<ethtool_channels, std::string> net_info::get_channel_count(FixedNam
 
 	if (ioctl(fd, SIOCETHTOOL, &ifr) != 0) {
 		close(fd);
-		return tl::unexpected("Error receiving from ethtool socket");
+		return tl::unexpected(fmt::format("Error receiving from ethtool socket: {}", strerror(errno)));
 	}
 
 	close(fd);
