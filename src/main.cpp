@@ -1,3 +1,4 @@
+#include <curses.h>
 #include <expected_helpers.h>
 #include <fcntl.h>
 #include <ncurses.h>
@@ -469,7 +470,11 @@ tl::expected<void, std::string> VerifyQueues(FixedName<IFNAMSIZ> dev_name, const
 	auto channel_count = net_info::get_channel_count(dev_name);
 	if (!channel_count.has_value()) {
 		return tl::unexpected(
-		    fmt::format("{}, channel_count error: {}\n", error_str, channel_count.error()));
+		    fmt::format("{}, channel_count error: {}\n An invalid argument or inappropriate ioctl "
+			    "for device error can indicate "
+			    "insufficient multiqueue support. In this case you can opt to disable the queue check "
+			    "using --skip-queue-count-check.",
+			    error_str, channel_count.error()));
 	}
 
 	uint32_t combined_channels = channel_count.value().combined_count;
@@ -606,6 +611,11 @@ int main(int argc, char** argv) {
 			fmt::print("{} {}", error_str, res.error());
 			return -1;
 		}
+	} else if (user_config.skip_queue_count_check) {
+		spdlog::warn("Queue count check is disabled! This means sanicdns NOT verify if the amount of queues match the amount of workers. "
+				"In case you have more queues than workers, please use RSS to make sure redudant queues are unused like so:\n"
+				"sudo ethtool -X [interface] equal [num workers]. Not doing this WILL result in SEVERELY degraded performance!");
+		rte_delay_ms(2000);
 	}
 
 	auto dpdk_args = init_eal_args(user_config, ethernet_config);
