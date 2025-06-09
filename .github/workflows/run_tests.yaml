@@ -8,17 +8,18 @@ jobs:
       matrix:
         compiler: [gcc, clang]
         nic_type: [AF_XDP, I40E]
-    name: Build bruteforcer
-    runs-on: ubuntu-24.04
+        arch: [x86_64, aarch64]
+    name: Build bruteforcer (${{ matrix.arch }})
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
         with:
           path: src/
           submodules: recursive
-      
+
       - name: Cache apt packages
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
@@ -40,12 +41,24 @@ jobs:
                             linux-headers-generic \
                             libbpf-dev \
                             libc6-dev \
-                            libc6-dev-i386 \
                             libxdp-dev \
                             clang-17
 
+      - name: Install x86_64 specific packages
+        if: matrix.arch == 'x86_64'
+        run: sudo apt-get install -y libc6-dev-i386
+
+      # - name: Setup tmate session
+      #   if: matrix.arch == 'aarch64'
+      #   uses: mxschmitt/action-tmate@v3
+
       - name: Symlink asm folder
+        if: matrix.arch == 'x86_64'
         run: sudo ln -s /usr/include/asm-generic/ /usr/include/asm
+
+      - name: Symlink asm folder
+        if: matrix.arch == 'aarch64'
+        run: sudo ln -s /usr/include/aarch64-linux-gnu/asm /usr/include/asm
 
       - name: Make build dir
         run: mkdir src/build
