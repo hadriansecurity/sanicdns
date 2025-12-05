@@ -69,6 +69,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 # Find DPDK
 find_package(dpdk REQUIRED)
 
+find_package(Boost REQUIRED COMPONENTS math random)
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "14.0.0")
 	    add_compile_options(-Wno-dangling-reference)
 endif()
@@ -147,10 +149,11 @@ target_link_libraries("${PROJ_NAME}_libs" PUBLIC
     elf
     z
     zstd
-    DPDK::dpdk
+    dpdk::dpdk
     glaze::glaze
     spdlog
     ${NUMA_LIBRARY}
+    Boost::boost
 )
 
 target_link_libraries(${PROJ_NAME} PUBLIC

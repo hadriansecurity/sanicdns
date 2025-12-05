@@ -1,177 +1,143 @@
+# Try to find dpdk
 #
-# This file is open source software, licensed to you under the terms
-# of the Apache License, Version 2.0 (the "License").  See the NOTICE file
-# distributed with this work for additional information regarding copyright
-# ownership.  You may not use this file except in compliance with the License.
+# Once done, this will define
 #
-# You may obtain a copy of the License at
-#
-#   http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-# KIND, either express or implied.  See the License for the
-# specific language governing permissions and limitations
-# under the License.
-#
+# dpdk::dpdk
+# dpdk_FOUND
+# dpdk_INCLUDE_DIR
+# dpdk_LIBRARIES
 
-#
-# Copyright (C) 2018 Scylladb, Ltd.
-#
-
-find_package (PkgConfig REQUIRED)
-pkg_check_modules (dpdk_PC libdpdk)
-
-# we cannot use ${dpdk_PC_STATIC_LDFLAGS} directly, because we want to
-# export DPDK as a bundle of static libraries, so need to find the
-# individual paths to all .a files
-find_path (dpdk_INCLUDE_DIR
-  NAMES rte_atomic.h
-  HINTS
-    ${dpdk_PC_INCLUDE_DIRS}
-  PATH_SUFFIXES
-    dpdk)
-
-set(rte_libs
-    bus_pci
-    bus_vdev
-    cfgfile
-    cmdline
-    cryptodev
-    dmadev
-    eal
-    ethdev
-    hash
-    kvargs
-    mbuf
-    mempool
-    mempool_ring
-    meter
-    net
-    net_af_xdp
-    net_bnxt
-    net_cxgbe
-    net_e1000
-    net_ena
-    net_enic
-    net_i40e
-    net_ixgbe
-    net_nfp
-    net_qede
-    net_ring
-    net_sfc
-    net_vmxnet3
-    pci
-    rcu
-    ring
-    security
-    telemetry
-    timer
-    vhost
-)
-
-# Only necessary when linking statically
-if (${BUILD_STATIC})
-  set(rte_libs
-      ${rte_libs}
-      common_nfp
-      log
-      vdpa_nfp
-  )
+find_package(PkgConfig QUIET)
+if(PKG_CONFIG_FOUND)
+  pkg_check_modules(dpdk QUIET libdpdk)
 endif()
 
-# sfc_efx driver can only build on x86 and aarch64
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "amd64|x86_64|aarch64")
-  list (APPEND rte_libs
-    common_sfc_efx)
-endif ()
-
-list (APPEND dpdk_REQUIRED
-  dpdk_INCLUDE_DIR)
-
-foreach (lib ${rte_libs})
-  string(TOUPPER ${lib} upper_lib)
-  set(library_name "dpdk_${upper_lib}_LIBRARY")
-  find_library (${library_name}
-    NAME rte_${lib}
+if(dpdk_INCLUDE_DIRS)
+  # good
+elseif(TARGET dpdk::dpdk)
+  get_target_property(dpdk_INCLUDE_DIRS
+     dpdk::dpdk INTERFACE_INCLUDE_DIRECTORIES)
+else()
+  find_path(dpdk_config_INCLUDE_DIR rte_config.h
     HINTS
-      ${dpdk_PC_STATIC_LIBRARY_DIRS})
-  list (APPEND dpdk_REQUIRED
-    ${library_name})
-  list (APPEND dpdk_LIBRARIES
-    ${library_name})
-
-  if (NOT ${library_name})
-    continue()
-  endif ()
-
-  set (library_path ${${library_name}})
-  list (APPEND _dpdk_linker_files ${library_path})
-  set (dpdk_lib dpdk::${lib})
-  list (APPEND _dpdk_libraries ${dpdk_lib})
-
-  if (dpdk_INCLUDE_DIR AND NOT (TARGET ${dpdk_lib}))
-    add_library (${dpdk_lib} UNKNOWN IMPORTED)
-    set_target_properties (${dpdk_lib}
-      PROPERTIES
-        IMPORTED_LOCATION ${library_path}
-        INTERFACE_INCLUDE_DIRECTORIES ${dpdk_INCLUDE_DIR})
-  endif ()
-endforeach ()
-
-include (FindPackageHandleStandardArgs)
-find_package_handle_standard_args (dpdk
-  REQUIRED_VARS
-    ${dpdk_REQUIRED})
-
-if (dpdk_FOUND AND NOT (TARGET dpdk))
-  get_filename_component (library_suffix "${dpdk_EAL_LIBRARY}" LAST_EXT)
-  # strictly speaking, we should have being using check_c_compiler_flag()
-  # here, but we claim Seastar as a project written in CXX language, and
-  # C is not enabled, so CXX is used here instead.
-  include(CheckCXXCompilerFlag)
-  check_cxx_compiler_flag("-Wno-volatile" _warning_supported_volatile)
-  if(_warning_supported_volatile)
-    # include/generic/rte_spinlock.h increments volatiled-qualified type with
-    # "++". but this is deprecated by GCC, so silence it.
-    set(compile_options
-      INTERFACE_COMPILE_OPTIONS "-Wno-volatile")
+      ENV DPDK_DIR
+    PATH_SUFFIXES
+      dpdk
+      include)
+  find_path(dpdk_common_INCLUDE_DIR rte_common.h
+    HINTS
+      ENV DPDK_DIR
+    PATH_SUFFIXES
+      dpdk
+      include)
+  set(dpdk_INCLUDE_DIRS "${dpdk_config_INCLUDE_DIR}")
+  if(dpdk_common_INCLUDE_DIR AND NOT dpdk_config_INCLUDE_DIR STREQUAL dpdk_common_INCLUDE_DIR)
+    list(APPEND dpdk_INCLUDE_DIRS "${dpdk_common_INCLUDE_DIR}")
   endif()
-  if (library_suffix STREQUAL CMAKE_STATIC_LIBRARY_SUFFIX)
-    # No pmd driver code will be pulled in without "--whole-archive". To
-    # avoid exposing that to seastar users, combine dpdk into a single
-    # .o file.
-    set (dpdk_object_path "${CMAKE_BINARY_DIR}/dpdk.o")
-    add_custom_command (
-      OUTPUT ${dpdk_object_path}
-      COMMAND ${CMAKE_CXX_COMPILER}
-        -r # create a relocatable object
-        -o ${dpdk_object_path}
-        -Wl,--whole-archive ${_dpdk_linker_files}
-      DEPENDS
-        ${_dpdk_linker_files})
-    add_custom_target (dpdk_object
-      DEPENDS ${dpdk_object_path})
+endif()
 
-    add_library (dpdk OBJECT IMPORTED)
-    add_dependencies (dpdk dpdk_object)
-    set_target_properties (dpdk
-      PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES ${dpdk_INCLUDE_DIR}
-        IMPORTED_OBJECTS ${dpdk_object_path}
-        ${compile_options})
-    # we include dpdk in seastar already, so no need to expose it with
-    # dpdk_LIBRARIES
-    set (dpdk_LIBRARIES "")
-    add_library (DPDK::dpdk ALIAS dpdk)
-  else ()
-    set (dpdk_LIBRARIES ${dpdk_PC_LDFLAGS})
-    add_library (DPDK::dpdk INTERFACE IMPORTED)
-    set_target_properties (DPDK::dpdk
-      PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${dpdk_PC_INCLUDE_DIRS}"
-        INTERFACE_LINK_LIBRARIES "${_dpdk_libraries}"
-        ${compile_options})
+set(components
+  bus_pci
+  bus_vdev
+  cfgfile
+  cmdline
+  eal
+  ethdev
+  hash
+  kvargs
+  mbuf
+  mempool
+  mempool_ring
+  net
+  pci
+  pmd_af_packet
+  pmd_bnxt
+  pmd_bond
+  pmd_cxgbe
+  pmd_e1000
+  pmd_ena
+  pmd_enic
+  pmd_i40e
+  pmd_ixgbe
+  pmd_mlx5
+  pmd_nfp
+  pmd_qede
+  pmd_ring
+  pmd_sfc_efx
+  pmd_vmxnet3_uio
+  pmd_hns3
+  pmd_hinic
+  ring
+  timer)
+
+# for collecting dpdk library targets, it will be used when defining dpdk::dpdk
+set(_dpdk_libs)
+# for list of dpdk library archive paths
+set(dpdk_LIBRARIES "")
+foreach(c ${components})
+  set(dpdk_lib dpdk::${c})
+  if(TARGET ${dpdk_lib})
+    get_target_property(DPDK_rte_${c}_LIBRARY
+      ${dpdk_lib} IMPORTED_LOCATION)
+  else()
+    find_library(DPDK_rte_${c}_LIBRARY rte_${c}
+      HINTS
+        ENV DPDK_DIR
+        ${dpdk_LIBRARY_DIRS}
+        PATH_SUFFIXES lib)
   endif()
-endif ()
+  if(DPDK_rte_${c}_LIBRARY)
+    if (NOT TARGET ${dpdk_lib})
+      add_library(${dpdk_lib} UNKNOWN IMPORTED)
+      set_target_properties(${dpdk_lib} PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${dpdk_INCLUDE_DIRS}"
+        IMPORTED_LOCATION "${DPDK_rte_${c}_LIBRARY}")
+      if(c STREQUAL pmd_mlx5)
+        find_package(verbs QUIET)
+        if(verbs_FOUND)
+          target_link_libraries(${dpdk_lib} INTERFACE IBVerbs::verbs)
+        endif()
+      endif()
+    endif()
+    list(APPEND _dpdk_libs ${dpdk_lib})
+    list(APPEND dpdk_LIBRARIES ${DPDK_rte_${c}_LIBRARY})
+  endif()
+endforeach()
+
+mark_as_advanced(dpdk_INCLUDE_DIRS ${dpdk_LIBRARIES})
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(dpdk DEFAULT_MSG
+  dpdk_INCLUDE_DIRS
+  dpdk_LIBRARIES)
+
+if(dpdk_FOUND)
+  if(NOT TARGET dpdk::cflags)
+     if(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64|x86_64|AMD64")
+      set(rte_cflags "-march=core2")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm|ARM")
+      set(rte_cflags "-march=armv7-a")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|AARCH64")
+      set(rte_cflags "-march=armv8-a+crc")
+    endif()
+    add_library(dpdk::cflags INTERFACE IMPORTED)
+    if (rte_cflags)
+      set_target_properties(dpdk::cflags PROPERTIES
+        INTERFACE_COMPILE_OPTIONS "${rte_cflags}")
+    endif()
+  endif()
+
+  if(NOT TARGET dpdk::dpdk)
+    add_library(dpdk::dpdk INTERFACE IMPORTED)
+    find_package(Threads QUIET)
+    list(APPEND _dpdk_libs
+      Threads::Threads
+      dpdk::cflags
+      numa)
+    set_target_properties(dpdk::dpdk PROPERTIES
+      INTERFACE_LINK_LIBRARIES "${_dpdk_libs}"
+      INTERFACE_INCLUDE_DIRECTORIES "${dpdk_INCLUDE_DIRS}")
+  endif()
+endif()
+
+unset(_dpdk_libs)

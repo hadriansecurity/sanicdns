@@ -1,11 +1,14 @@
 #include "worker.h"
 
+#include <cmath>
 #include <rte_common.h>
 #include <rte_hexdump.h>
 #include <rte_ip.h>
 #include <rte_malloc.h>
 #include <rte_mempool.h>
+#include <rte_random.h>
 #include <spdlog/spdlog.h>
+#include <boost/math/distributions.hpp>
 
 #include <glaze/glaze.hpp>
 #include <optional>
@@ -23,6 +26,21 @@
 #include "network_types.h"
 #include "scanner_config.h"
 
+struct Resolver {
+	Resolver(InAddr address)
+		: address(address), weight(0), alpha(1), beta(1) {}
+
+	InAddr address;
+	
+	// How many tries we have left on this resolver.
+	unsigned int weight;
+
+	// The alpha and beta parameters to construct the beta distribution.
+	// Alpha counts the number of successes, and beta the number of failures.
+	// These values are initially both 1, which corresponds to a uniform distribution.
+	size_t alpha, beta;
+};
+
 struct RequestContainer {
 	RequestContainer()
 	    : ready_for_send_node(this), timeout_node(this), request(std::nullopt) { }
@@ -32,10 +50,18 @@ struct RequestContainer {
 
 	std::optional<RTEMbufElement<Request>> request;
 	std::chrono::time_point<std::chrono::steady_clock> time_sent;
-	InAddr resolver;
+	Resolver *resolver;
 	size_t num_tries;
 	size_t loc;
 };
+
+static unsigned int CalculateResolverWeight(unsigned int penalty, size_t alpha, size_t beta) {
+	using namespace boost;
+	auto dist = math::beta_distribution{static_cast<double>(alpha), static_cast<double>(beta)};
+	auto uniform = rte_drand();
+	auto x = math::quantile(dist, uniform);
+	return std::ceil(penalty * std::sqrt(x));
+}
 
 struct WorkerContext {
 	static tl::expected<WorkerContext, int> init(uint16_t worker_id,
@@ -57,10 +83,23 @@ struct WorkerContext {
 		return ctx;
 	}
 
+	Resolver *GetResolver(uint32_t resolver_penalty) {
+		auto resolver = &resolvers[resolver_index];
+		// Only when the resolver's weight is exhausted do we pick a new resolver.
+		// Implements a Thompson sampling-like algorithm.
+		if (resolver->weight == 0) {
+			resolver->weight = CalculateResolverWeight(resolver_penalty, resolver->alpha, resolver->beta);
+			resolver_index++;
+			resolver_index %= resolvers.size();
+		}
+		return resolver;
+	}
+
 	uint16_t worker_id;
 	uint16_t queue_id;
 
-	size_t resolver_count;
+	size_t resolver_index;
+	std::vector<Resolver> resolvers;
 
 	IntrusiveList<RequestContainer, &RequestContainer::ready_for_send_node> ready_for_send_list;
 	IntrusiveList<RequestContainer, &RequestContainer::timeout_node> timeout_list;
@@ -75,7 +114,11 @@ private:
 	WorkerContext(uint16_t worker_id, const WorkerParams &param)
 	    : worker_id(worker_id),
 	      queue_id(worker_id + (NIC_OPTS::queue_for_main_thread ? 1 : 0)),
-	      request_containers(param.num_containers) { }
+	      resolver_index(0),
+	      request_containers(param.num_containers) {
+		      for (auto &resolver : param.resolvers)
+			      resolvers.emplace_back(resolver);
+	      }
 };
 
 std::pair<uint16_t, uint16_t> PackPacketParams(uint16_t worker_id, uint32_t buffer_loc) {
@@ -127,13 +170,10 @@ RTEMbufArray<DefaultPacket, TX_PKT_BURST, MbufType::Pkt> ConsumeReadyForSendAndP
 
 		param.counters[ctx.worker_id].retry += (it->num_tries != 0);
 
-		ctx.resolver_count++;
-		ctx.resolver_count %= param.resolvers.size();
-
-		it->resolver = param.resolvers[ctx.resolver_count];
+		it->resolver = ctx.GetResolver(param.resolver_penalty);
 
 		DNSPacketConstructor::ConstructIpv4DNSPacket(packets[tx_write_cnt], src_mac,
-		    req.dst_mac, std::get<InAddr>(req.src_ip).s_addr, it->resolver.s_addr, udp_port,
+		    req.dst_mac, std::get<InAddr>(req.src_ip).s_addr, it->resolver->address.s_addr, udp_port,
 		    dns_id, req.name.buf.data(), req.name.len, req.q_type);
 
 		rxtx_if.PreparePktCksums<DefaultPacket, L3Type::Ipv4, L4Type::UDP>(
@@ -162,6 +202,9 @@ void ProcessTimeouts(WorkerContext &ctx, WorkerParams &param) {
 
 		if (static_cast<uint64_t>(elapsed_ms.count()) < param.timeout_ms)
 			break;
+
+		it->resolver->beta += 1;
+		it->resolver = ctx.GetResolver(param.resolver_penalty);
 
 		if (++it->num_tries > param.max_retries) {
 			spdlog::warn("{} has reached max retries",
@@ -242,7 +285,7 @@ void HandleParsedPacket(WorkerContext &ctx, WorkerParams &param, const DNSPacket
 		return;
 	}
 
-	if (request_container.resolver.s_addr != std::get<InAddr>(pkt.ip_data.src_ip).s_addr)
+	if (request_container.resolver->address.s_addr != std::get<InAddr>(pkt.ip_data.src_ip).s_addr)
 	    [[unlikely]] {
 		spdlog::warn("packet with name {} has IP mismatch!", pkt.question);
 		return;
@@ -258,6 +301,7 @@ void HandleParsedPacket(WorkerContext &ctx, WorkerParams &param, const DNSPacket
 
 	request_container.request = std::nullopt;
 	request_container.num_tries = 0;
+	request_container.resolver->alpha += 1;
 
 	ctx.timeout_list.delete_elem(request_container);
 	ctx.ready_for_send_list.delete_elem(request_container);

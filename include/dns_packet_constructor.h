@@ -249,8 +249,8 @@ inline char* DNSPacketConstructor::ConstructIpv6Hdr(char* buf, const in6_addr& s
 	ipv6_hdr->payload_len = rte_cpu_to_be_16(l4_len + sizeof(rte_ipv6_hdr));
 	ipv6_hdr->vtc_flow = rte_cpu_to_be_32(0);
 
-	memcpy(ipv6_hdr->src_addr, &src_addr, sizeof(in6_addr));
-	memcpy(ipv6_hdr->dst_addr, &dst_addr, sizeof(in6_addr));
+	memcpy(&ipv6_hdr->src_addr, &src_addr, sizeof(in6_addr));
+	memcpy(&ipv6_hdr->dst_addr, &dst_addr, sizeof(in6_addr));
 
 	return (char*) (ipv6_hdr + 1);
 }

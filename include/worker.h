@@ -17,6 +17,7 @@ struct WorkerParams {
 	const uint32_t rate_lim_pps;
 	const uint32_t timeout_ms;
 	const uint32_t max_retries;
+	const uint32_t resolver_penalty;
 
 	std::vector<PerCoreCounters, RteAllocator<PerCoreCounters>> &counters;
 	const std::vector<InAddr> &resolvers;

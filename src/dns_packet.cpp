@@ -382,8 +382,8 @@ tl::expected<DNSPacket, DNSParseError> DNSPacket::init(
 		const rte_ipv6_hdr *ip_hdr =
 		    UNWRAP_OR_RETURN(AdvanceReader<rte_ipv6_hdr>(packet_bytes, reader));
 
-		ip_data.dst_ip = *reinterpret_cast<const In6Addr *>(ip_hdr->dst_addr);
-		ip_data.src_ip = *reinterpret_cast<const In6Addr *>(ip_hdr->src_addr);
+		ip_data.dst_ip = *reinterpret_cast<const In6Addr *>(&ip_hdr->dst_addr);
+		ip_data.src_ip = *reinterpret_cast<const In6Addr *>(&ip_hdr->src_addr);
 
 		if (ip_hdr->proto != IPPROTO_UDP)
 			return tl::unexpected(DNSParseError::IpHdrProtoErr);
