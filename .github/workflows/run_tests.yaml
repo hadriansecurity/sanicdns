@@ -5,6 +5,7 @@ on: [pull_request]
 jobs:
   build_and_test:
     strategy:
+      fail-fast: false
       matrix:
         compiler: [gcc, clang]
         nic_type: [AF_XDP, I40E]
