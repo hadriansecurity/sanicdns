@@ -12,13 +12,13 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           path: src/
           submodules: recursive
-      
+
       - name: Cache apt packages
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
